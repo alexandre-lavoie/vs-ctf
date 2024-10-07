@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import { Challenge, ChallengeAPI, ChallengeTreeEntry } from "./types";
 
 export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<ChallengeTreeEntry> {
@@ -11,10 +12,10 @@ export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<Challe
         this.api = api;
     }
 
-    public getChildren(entry?: ChallengeTreeEntry): Thenable<ChallengeTreeEntry[]> {
-        let entries: ChallengeTreeEntry[] = [];
+    public async getChildren(entry?: ChallengeTreeEntry): Promise<ChallengeTreeEntry[]> {
+        const challenges = await this.api.getChallenges();
 
-        const challenges = this.api.getChallenges();
+        let entries: ChallengeTreeEntry[] = [];
 
         if (entry == null) {
             const categories = [...new Set(challenges.map((challenge) => challenge.category))];
@@ -40,7 +41,7 @@ export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<Challe
             ];
         }
 
-        return Promise.resolve(entries);
+        return entries;
     }
 
     public getTreeItem(entry: ChallengeTreeEntry): vscode.TreeItem {
@@ -61,14 +62,11 @@ export class ChallengeTreeItem extends vscode.TreeItem {
 
     public constructor(challenge: Challenge) {
         super(challenge.name, vscode.TreeItemCollapsibleState.Collapsed);
+        this.contextValue = `challenge_${challenge.solved ? "done" : "todo"}`;
 
         this.description = `${challenge.value} Points, ${challenge.solves} Solves`;
 
         this.iconPath = challenge.solved ? ChallengeTreeItem.SOLVED_ICON : ChallengeTreeItem.TODO_ICON;
-        this.command = {
-            command: "vs-ctf.test",
-            title: "Test"
-        };
     }
 }
 
@@ -77,6 +75,7 @@ export class ChallengeCategoryTreeItem extends vscode.TreeItem {
 
     public constructor(name: string) {
         super(name, vscode.TreeItemCollapsibleState.Collapsed);
+        this.contextValue = "category";
 
         this.iconPath = ChallengeCategoryTreeItem.ICON;
     }
@@ -85,6 +84,7 @@ export class ChallengeCategoryTreeItem extends vscode.TreeItem {
 export class ChallengeFileTreeItem extends vscode.TreeItem {
     public constructor(name: string) {
         super(name, vscode.TreeItemCollapsibleState.None);
+        this.contextValue = "file";
 
         this.resourceUri = vscode.Uri.parse("/etc/passwd");
     }

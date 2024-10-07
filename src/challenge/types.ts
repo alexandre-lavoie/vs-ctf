@@ -6,24 +6,27 @@ export interface Challenge {
     value: number;
     solves: number;
     solved: boolean;
+    files: string[];
 }
 
 export interface ChallengeAPI {
-    getChallenges: () => readonly Challenge[],
-    refreshChallenges: () => void,
+    getChallenge: (id: string) => Promise<Challenge | undefined>, 
+    getChallenges: () => Promise<readonly Challenge[]>,
+    refreshChallenges: () => Promise<void>,
+    solveChallenge: (id: string, flag: string) => Promise<boolean>, 
 }
 
-interface ChallengeTreeItem {
+export interface ChallengeTreeItem {
     type: "challenge",
     data: Challenge,
 }
 
-interface ChallengeCategoryTreeItem {
+export interface ChallengeCategoryTreeItem {
     type: "category",
     data: string,
 }
 
-interface ChallengeFileTreeItem {
+export interface ChallengeFileTreeItem {
     type: "file",
     data: string,
 }

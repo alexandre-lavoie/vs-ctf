@@ -27,6 +27,8 @@
     "devDependencies": {
         "@rollup/plugin-typescript": "^12.1.0",
         "@types/node": "^22.7.4",
+        "@types/react": "^18.3.11",
+        "@types/react-dom": "^18.3.0",
         "@types/vscode": "^1.90.0",
         "rollup": "^4.24.0",
         "tslib": "^2.7.0",
@@ -58,8 +60,42 @@
             {
                 "command": "vs-ctf.test",
                 "category": "VS CTF",
-                "title": "Test"
+                "title": "Test",
+                "icon": "$(zap)"
+            },
+            {
+                "command": "vs-ctf.view-challenge",
+                "category": "VS CTF",
+                "title": "View Challenge",
+                "icon": "$(eye)",
+                "enablement": "view == vs-ctf.challenges"
+            },
+            {
+                "command": "vs-ctf.solve-challenge",
+                "category": "VS CTF",
+                "title": "Solve Challenge",
+                "icon": "$(check)",
+                "enablement": "view == vs-ctf.challenges"
             }
-        ]
+        ],
+        "menus": {
+            "view/item/context": [
+                {
+                    "command": "vs-ctf.solve-challenge",
+                    "when": "view == vs-ctf.challenges && viewItem == challenge_todo",
+                    "group": "inline"
+                },
+                {
+                    "command": "vs-ctf.view-challenge",
+                    "when": "view == vs-ctf.challenges && (viewItem == challenge_todo || viewItem == challenge_done)",
+                    "group": "inline"
+                }
+            ]
+        }
+    },
+    "dependencies": {
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-markdown": "^6.0.3"
     }
 }

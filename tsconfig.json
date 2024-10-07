@@ -7,8 +7,6 @@
 		],
 		"moduleResolution": "bundler",
 		"strict": true,
-		"jsx": "react",
-		"jsxFactory": "vscpp",
-		"jsxFragmentFactory": "vscppf",
+		"jsx": "react"
 	}
 }
