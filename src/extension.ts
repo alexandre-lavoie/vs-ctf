@@ -8,7 +8,7 @@ import {
   OnChallengeRefresh,
 } from "./challenge/types";
 import { ChallengeWebview } from "./challenge/view";
-import { updateChallengeFolder } from "./fileSystem";
+import { updateChallengeFolder, updateWorkspaceFolder } from "./fileSystem";
 import { TeamTreeDataProvider } from "./team/tree";
 import { OnTeamRefresh, Team, TeamAPI } from "./team/types";
 import { stringToSafePath } from "./utils";
@@ -78,6 +78,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const registers = [
     registerConfigure,
+    registerRefreshConfiguration,
     registerChallengeProvider,
     registerTeamProvider,
     registerRefreshChallenge,
@@ -180,8 +181,22 @@ function registerTeamProvider(props: RegisterData): void {
 }
 
 function registerRefreshConfiguration(props: RegisterData): void {
-  const listener = vscode.workspace.onDidChangeConfiguration((event) => {
-    // TODO: Configuration
+  const listener = vscode.workspace.onDidChangeConfiguration(async (event) => {
+    const config = vscode.workspace.getConfiguration("vs-ctf");
+
+    let folder = undefined;
+    if (
+      vscode.workspace.workspaceFolders &&
+      vscode.workspace.workspaceFolders.length > 0
+    ) {
+      folder = vscode.workspace.workspaceFolders[0];
+    }
+
+    if (event.affectsConfiguration("vs-ctf.ctf.enabled")) {
+      if (folder && config.get("ctf.enabled")) {
+        await updateWorkspaceFolder(props.context.extensionUri, folder.uri);
+      }
+    }
   });
 
   props.context.subscriptions.push(listener);

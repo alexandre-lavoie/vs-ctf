@@ -42,10 +42,10 @@
       {
         "title": "VS CTF",
         "properties": {
-          "vs-ctf.enabled": {
-            "type": "boolean",
-            "default": true,
-            "description": "Is VS CTF enabled?"
+          "vs-ctf.template": {
+            "type": "string",
+            "default": null,
+            "description": "Path to template folder"
           }
         }
       },
