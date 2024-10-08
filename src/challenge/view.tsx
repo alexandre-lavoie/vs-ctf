@@ -1,10 +1,8 @@
 import * as React from "react";
 import * as ReactDOMServer from "react-dom/server";
-import Markdown from "react-markdown";
 import * as vscode from "vscode";
 
-import FileButton from "../components/FileButton";
-import Panel from "../components/Panel";
+import ChallengeJSX from "../components/Challenge";
 import { Challenge, ChallengeAPI, OnChallengeRefresh } from "./types";
 
 export class ChallengeWebview {
@@ -67,7 +65,7 @@ export class ChallengeWebview {
 
     this.panel = panel;
 
-    this.refreshPanel();
+    await this.refreshPanel();
   }
 
   public async refreshPanel(): Promise<void> {
@@ -84,34 +82,11 @@ export class ChallengeWebview {
   }
 
   public buildHTML(): string {
-    return ReactDOMServer.renderToString(this.buildJSX());
-  }
-
-  public buildJSX(): React.ReactNode {
-    if (!this.challenge) return <></>;
-
-    return (
-      <Panel extensionUri={this.extensionUri}>
-        <div style={{ display: "flex", gap: "16px" }}>
-          <div style={{ flexGrow: 1 }}>
-            <h2>{this.challenge.name}</h2>
-          </div>
-          <div style={{ display: "flex", gap: "16px" }}>
-            <h2>
-              {this.challenge.value} Points, {this.challenge.solves} Solves
-            </h2>
-          </div>
-        </div>
-        <hr />
-        <Markdown>{this.challenge.description}</Markdown>
-        <hr />
-        <br />
-        <div className="button-group">
-          {this.challenge.files.map((path) => (
-            <FileButton key={path} path={path} />
-          ))}
-        </div>
-      </Panel>
+    return ReactDOMServer.renderToString(
+      <ChallengeJSX
+        extensionUri={this.extensionUri}
+        challenge={this.challenge!}
+      />
     );
   }
 }

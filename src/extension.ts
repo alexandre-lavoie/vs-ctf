@@ -1,16 +1,17 @@
 import * as vscode from "vscode";
 
+import { VSCodeAPI } from "./api/vscode";
 import { ChallengeTreeDataProvider } from "./challenge/tree";
 import {
-  Challenge,
   ChallengeAPI,
   ChallengeTreeID,
   OnChallengeRefresh,
 } from "./challenge/types";
 import { ChallengeWebview } from "./challenge/view";
+import { CTF_TYPES, FLAG_KEY } from "./config";
 import { updateChallengeFolder, updateWorkspaceFolder } from "./fileSystem";
 import { TeamTreeDataProvider } from "./team/tree";
-import { OnTeamRefresh, Team, TeamAPI } from "./team/types";
+import { OnTeamRefresh, TeamAPI } from "./team/types";
 import { stringToSafePath } from "./utils";
 
 interface RegisterData {
@@ -21,59 +22,14 @@ interface RegisterData {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  const challenges: Challenge[] = [
-    {
-      id: "0",
-      name: "Challenge 1",
-      category: "Reverse Engineering",
-      description: "This is a test",
-      value: 69,
-      solves: 420,
-      solved: true,
-      files: ["http://test.com/a.b"],
-    },
-    {
-      id: "1",
-      name: "Challenge 2",
-      category: "Steganography",
-      description: "This is a test",
-      value: 456,
-      solves: 123,
-      solved: false,
-      files: ["http://test.com/a.b"],
-    },
-  ];
-
-  const teams: Team[] = [
-    {
-      id: "0",
-      name: "Team 1",
-      position: 1,
-      score: 69,
-    },
-  ];
-
-  const onTeamRefresh: OnTeamRefresh = new vscode.EventEmitter();
-  const onChallengeRefresh: OnChallengeRefresh = new vscode.EventEmitter();
-
-  const api: ChallengeAPI & TeamAPI = {
-    getChallenge: (id) =>
-      challenges.find((challenge) => challenge.id === id) || null,
-    getChallenges: () => challenges,
-    refreshChallenge: async (id) => onChallengeRefresh.fire(id),
-    refreshChallenges: async () => onChallengeRefresh.fire(null),
-    solveChallenge: async (id, flag) => false,
-    getTeam: (id) => teams.find((team) => team.id === id) || null,
-    getTeams: () => teams,
-    refreshTeam: async (id) => onTeamRefresh.fire(id),
-    refreshTeams: async () => onTeamRefresh.fire(null),
-  };
+  const api = new VSCodeAPI(context);
+  api.initialize();
 
   const props: RegisterData = {
     api,
     context,
-    onTeamRefresh,
-    onChallengeRefresh,
+    onTeamRefresh: api.onTeamRefresh,
+    onChallengeRefresh: api.onChallengeRefresh,
   };
 
   const registers = [
@@ -100,9 +56,10 @@ function registerConfigure(props: RegisterData): void {
     async () => {
       const config = vscode.workspace.getConfiguration("vs-ctf");
 
-      const ctfType = await vscode.window.showQuickPick(["ctfd", "custom"], {
+      const ctfType = await vscode.window.showQuickPick(CTF_TYPES, {
         title: "What platform is this CTF running on?",
         canPickMany: false,
+        ignoreFocusOut: true,
       });
       if (!ctfType) return;
       await config.update("ctf.type", ctfType);
@@ -110,6 +67,7 @@ function registerConfigure(props: RegisterData): void {
       const url = await vscode.window.showInputBox({
         title: "What is the URL of the CTF?",
         value: config.get("ctf.url"),
+        ignoreFocusOut: true,
       });
       if (!url) return;
       await config.update("ctf.url", url);
@@ -121,6 +79,7 @@ function registerConfigure(props: RegisterData): void {
               title: "What is your CTFd session token or api key?",
               value: config.get("ctfd.token"),
               password: true,
+              ignoreFocusOut: true,
             });
             if (!token) return;
             await config.update("ctfd.token", token);
@@ -149,9 +108,9 @@ function registerChallengeProvider(props: RegisterData): void {
 
   const command = vscode.commands.registerCommand(
     "vs-ctf.goto-challenge",
-    async (id: { id: string }) => {
-      await vscode.commands.executeCommand("vs-ctf.view-challenge", id);
+    (id: { id: string }) => {
       tree.reveal({ type: "challenge", id: id.id });
+      vscode.commands.executeCommand("vs-ctf.view-challenge", id);
     }
   );
 
@@ -236,6 +195,10 @@ function registerOpenChallenge(props: RegisterData): void {
         "README.md"
       );
 
+      await vscode.commands.executeCommand(
+        "workbench.files.action.collapseExplorerFolders"
+      );
+
       await vscode.commands.executeCommand("revealInExplorer", path);
     }
   );
@@ -272,7 +235,7 @@ function registerViewChallenge(props: RegisterData): void {
 
   const listener = vscode.commands.registerCommand(
     "vs-ctf.view-challenge",
-    (entry: { id: string }) => {
+    async (entry: { id: string }) => {
       const challenge = props.api.getChallenge(entry.id);
       if (!challenge) return;
 
@@ -286,7 +249,9 @@ function registerViewChallenge(props: RegisterData): void {
         );
       }
 
-      view.showPanel();
+      await view.showPanel();
+
+      await props.api.refreshChallenge(entry.id);
     }
   );
 
@@ -300,7 +265,7 @@ function registerSolveChallenge(props: RegisterData): void {
       const challenge = props.api.getChallenge(id.id);
       if (!challenge) return;
 
-      const flagKey = `flag:${challenge.id}`;
+      const flagKey = `${FLAG_KEY}${challenge.id}`;
       const value: string | undefined =
         props.context.workspaceState.get(flagKey) || undefined;
 
@@ -312,11 +277,10 @@ function registerSolveChallenge(props: RegisterData): void {
         return;
       }
 
-      await props.context.workspaceState.update(flagKey, flag);
+      const cleanFlag = flag.trim();
+      await props.context.workspaceState.update(flagKey, cleanFlag);
 
-      if (await props.api.solveChallenge(challenge.id, flag)) {
-        await props.api.refreshChallenge(challenge.id);
-
+      if (await props.api.solveChallenge(challenge.id, cleanFlag)) {
         vscode.window.showInformationMessage("Valid flag");
       } else {
         vscode.window.showErrorMessage("Invalid flag");
@@ -355,10 +319,12 @@ function registerGotoMe(props: RegisterData): void {
   const listener = vscode.commands.registerCommand(
     "vs-ctf.goto-me",
     async () => {
-      // TODO: Team
-      // await vscode.commands.executeCommand("vs-ctf.goto-team", {
-      //   id: team.id,
-      // });
+      const id = await props.api.getTeamId();
+      if (!id) return;
+
+      await vscode.commands.executeCommand("vs-ctf.goto-team", {
+        id,
+      });
     }
   );
 

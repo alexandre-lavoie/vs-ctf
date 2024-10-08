@@ -4,18 +4,19 @@ export interface Challenge {
   id: string;
   name: string;
   category: string;
-  description: string;
   value: number;
   solves: number;
   solved: boolean;
-  files: string[];
+  description?: string;
+  connection?: string;
+  files?: string[];
 }
 
 export interface ChallengeAPI {
   getChallenge: (id: string) => Challenge | null;
   getChallenges: () => readonly Challenge[];
-  refreshChallenge: (id: string) => Promise<void>;
-  refreshChallenges: () => Promise<void>;
+  refreshChallenge: (id: string) => Promise<boolean>;
+  refreshChallenges: () => Promise<boolean>;
   solveChallenge: (id: string, flag: string) => Promise<boolean>;
 }
 

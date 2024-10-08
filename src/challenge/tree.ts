@@ -26,9 +26,13 @@ export class ChallengeTreeDataProvider
     onChallengeRefresh: OnChallengeRefresh
   ) {
     this.api = api;
-    this.onChallengeRefresh = onChallengeRefresh;
 
-    this.onChallengeRefresh.event(() => {
+    this.onChallengeRefresh = onChallengeRefresh;
+    this.registerRefresh();
+  }
+
+  private registerRefresh() {
+    this.onChallengeRefresh.event((id: string | null) => {
       this._onDidChangeTreeData.fire();
     });
   }
@@ -116,7 +120,7 @@ export class ChallengeCategoryTreeItem extends vscode.TreeItem {
   public static readonly ICON = vscode.ThemeIcon.Folder;
 
   public constructor(name: string) {
-    super(name, vscode.TreeItemCollapsibleState.Collapsed);
+    super(name, vscode.TreeItemCollapsibleState.Expanded);
     this.contextValue = "category";
 
     this.iconPath = ChallengeCategoryTreeItem.ICON;

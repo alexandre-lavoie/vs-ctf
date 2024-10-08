@@ -8,10 +8,11 @@ export interface Team {
 }
 
 export interface TeamAPI {
+  getTeamId: () => Promise<string | null>;
   getTeam: (id: string) => Team | null;
   getTeams: () => readonly Team[];
-  refreshTeam: (id: string) => Promise<void>;
-  refreshTeams: () => Promise<void>;
+  refreshTeam: (id: string) => Promise<boolean>;
+  refreshTeams: () => Promise<boolean>;
 }
 
 export interface TeamTreeItem {

@@ -19,6 +19,10 @@ export class TeamTreeDataProvider
     this.api = api;
 
     this.onTeamRefresh = onTeamRefresh;
+    this.registerRefresh();
+  }
+
+  private registerRefresh() {
     this.onTeamRefresh.event(() => {
       this._onDidChangeTreeData.fire();
     });

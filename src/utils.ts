@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 const BAD_CHARS = `!"#$%&'()*+,./:;<=>?@[\]^\`{|}~`;
 
 export function stringToSafePath(value: string): string {
@@ -8,4 +10,10 @@ export function stringToSafePath(value: string): string {
   }
 
   return value;
+}
+
+export function extractFileName(uri: string): string {
+  const uriObj = vscode.Uri.parse(uri);
+  const sections = uriObj.path.split("/");
+  return sections[sections.length - 1];
 }
