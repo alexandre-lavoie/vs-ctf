@@ -11,6 +11,7 @@ import { ChallengeWebview } from "./challenge/view";
 import { TeamTreeDataProvider } from "./team/tree";
 import { OnTeamRefresh, Team, TeamAPI } from "./team/types";
 import { stringToSafePath } from "./utils";
+import { updateChallengeFolder } from "./challenge/fileSystem";
 
 interface RegisterData {
   context: vscode.ExtensionContext;
@@ -105,7 +106,7 @@ function registerChallengeProvider(props: RegisterData): void {
   const command = vscode.commands.registerCommand(
     "vs-ctf.goto-challenge",
     async (id: { id: string }) => {
-      vscode.commands.executeCommand("vs-ctf.view-challenge", id);
+      await vscode.commands.executeCommand("vs-ctf.view-challenge", id);
       tree.reveal({ type: "challenge", id: id.id });
     }
   );
@@ -155,13 +156,17 @@ function registerOpenChallenge(props: RegisterData): void {
 
       const folders = vscode.workspace.workspaceFolders;
       if (!folders || folders.length === 0) return;
+      const folder = folders[0];
+
+      await updateChallengeFolder(props.context.extensionUri, folder.uri, challenge);
 
       const path = vscode.Uri.joinPath(
-        folders[0].uri,
-        stringToSafePath(challenge.name)
+        folder.uri,
+        stringToSafePath(challenge.name),
+        "README.md"
       );
 
-      vscode.commands.executeCommand("revealInExplorer", path);
+      await vscode.commands.executeCommand("revealInExplorer", path);
     }
   );
 
@@ -183,7 +188,7 @@ function registerSearchChallenge(props: RegisterData): void {
       const challenge = challenges.find((challenge) => challenge.name === name);
       if (challenge == null) return;
 
-      vscode.commands.executeCommand("vs-ctf.goto-challenge", {
+      await vscode.commands.executeCommand("vs-ctf.goto-challenge", {
         id: challenge.id,
       });
     }
@@ -261,7 +266,7 @@ function registerSearchTeam(props: RegisterData): void {
       const team = teams.find((team) => team.name === name);
       if (team == null) return;
 
-      vscode.commands.executeCommand("vs-ctf.goto-team", {
+      await vscode.commands.executeCommand("vs-ctf.goto-team", {
         id: team.id,
       });
     }
