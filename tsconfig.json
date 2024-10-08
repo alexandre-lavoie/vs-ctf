@@ -1,12 +1,10 @@
 {
-    "include": ["src/**/*", "rollup.config.ts"],
-	"compilerOptions": {
-		"target": "ES2022",
-		"lib": [
-			"ES2022"
-		],
-		"moduleResolution": "bundler",
-		"strict": true,
-		"jsx": "react"
-	}
+  "include": ["src/**/*", "rollup.config.ts"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "react"
+  }
 }
