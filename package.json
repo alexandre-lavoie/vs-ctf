@@ -70,11 +70,17 @@
                 "icon": "$(eye)"
             },
             {
-                "command": "vs-ctf.goto-challenge",
+                "command": "vs-ctf.open-challenge",
                 "category": "VS CTF",
-                "title": "Goto Challenge",
+                "title": "Open Challenge",
                 "icon": "$(files)",
                 "enablement": "view == vs-ctf.challenges"
+            },
+            {
+                "command": "vs-ctf.search-challenge",
+                "category": "VS CTF",
+                "title": "Search Challenge",
+                "icon": "$(search)"
             },
             {
                 "command": "vs-ctf.solve-challenge",
@@ -98,6 +104,11 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "vs-ctf.search-challenge",
+                    "when": "view == vs-ctf.challenges",
+                    "group": "navigation"
+                },
+                {
                     "command": "vs-ctf.refresh-scoreboard",
                     "when": "view == vs-ctf.scoreboard",
                     "group": "navigation"
@@ -105,7 +116,7 @@
             ],
             "view/item/context": [
                 {
-                    "command": "vs-ctf.goto-challenge",
+                    "command": "vs-ctf.open-challenge",
                     "when": "view == vs-ctf.challenges && (viewItem == challenge_todo || viewItem == challenge_done)",
                     "group": "inline"
                 },

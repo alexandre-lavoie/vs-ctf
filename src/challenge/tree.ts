@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 
-import { Challenge, ChallengeAPI, ChallengeTreeEntry, OnChallengeRefresh } from "./types";
+import { Challenge, ChallengeAPI, ChallengeTreeID, OnChallengeRefresh } from "./types";
 
-export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<ChallengeTreeEntry> {
-    private _onDidChangeTreeData: vscode.EventEmitter<ChallengeTreeEntry | undefined | void> = new vscode.EventEmitter<ChallengeTreeEntry | undefined | void>();
-    readonly onDidChangeTreeData: vscode.Event<ChallengeTreeEntry | undefined | void> = this._onDidChangeTreeData.event;
+export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<ChallengeTreeID> {
+    private _onDidChangeTreeData: vscode.EventEmitter<ChallengeTreeID | undefined | void> = new vscode.EventEmitter<ChallengeTreeID | undefined | void>();
+    readonly onDidChangeTreeData: vscode.Event<ChallengeTreeID | undefined | void> = this._onDidChangeTreeData.event;
 
     public readonly api: ChallengeAPI;
     private readonly onChallengeRefresh: OnChallengeRefresh;
@@ -18,42 +18,51 @@ export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<Challe
         });
     }
 
-    public async getChildren(entry?: ChallengeTreeEntry): Promise<ChallengeTreeEntry[]> {
-        const challenges = await this.api.getChallenges();
+    public getParent(element: ChallengeTreeID): vscode.ProviderResult<ChallengeTreeID> {
+        switch (element.type) {
+            case "category":
+                return null;
+            case "challenge":
+                const challenge = this.api.getChallenge(element.id)!;
 
-        let entries: ChallengeTreeEntry[] = [];
+                return {type: "category", id: challenge.category}
+        }
+    }
 
-        if (entry == null) {
+    public async getChildren(element?: ChallengeTreeID): Promise<ChallengeTreeID[]> {
+        const challenges = this.api.getChallenges();
+
+        let ids: ChallengeTreeID[] = [];
+
+        if (element == null) {
             const categories = [...new Set(challenges.map((challenge) => challenge.category))];
             const sortedCategories = categories.sort((a, b) => a.localeCompare(b));
 
-            entries = sortedCategories.map((data) => ({
+            ids = sortedCategories.map((id) => ({
                 type: "category",
-                data
+                id
             }));
-        } else {
-            switch (entry.type) {
-                case "category": {
-                    const filteredChallenges = challenges.filter((challenge) => challenge.category === entry.data);
+        } else if (element.type === "category") {
+            const filteredChallenges = challenges.filter((challenge) => challenge.category === element.id);
 
-                    entries = filteredChallenges.map((data) => ({
-                        type: "challenge",
-                        data
-                    }));
-
-                } break;
-            }
+            ids = filteredChallenges.map((challenge) => ({
+                type: "challenge",
+                id: challenge.id
+            }));
         }
 
-        return entries;
+        return ids;
     }
 
-    public getTreeItem(entry: ChallengeTreeEntry): vscode.TreeItem {
-        switch (entry.type) {
+    public getTreeItem(element: ChallengeTreeID): vscode.TreeItem {
+        switch (element.type) {
             case "challenge":
-                return new ChallengeTreeItem(entry.data);
+                const challenge = this.api.getChallenge(element.id);
+                if (!challenge) return {};
+
+                return new ChallengeTreeItem(challenge);
             case "category":
-                return new ChallengeCategoryTreeItem(entry.data);
+                return new ChallengeCategoryTreeItem(element.id);
         }
     }
 }
@@ -73,7 +82,7 @@ export class ChallengeTreeItem extends vscode.TreeItem {
         this.command = {
             title: "View challenge",
             command: "vs-ctf.view-challenge",
-            arguments: [{data: challenge}]
+            arguments: [{id: challenge.id}]
         };
     }
 }

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { ChallengeAPI, Challenge, ChallengeTreeItem, OnChallengeRefresh } from "./challenge/types";
+import { ChallengeAPI, Challenge, OnChallengeRefresh, ChallengeTreeID } from "./challenge/types";
 import { ChallengeTreeDataProvider } from "./challenge/tree";
 import { ChallengeWebview } from "./challenge/view";
 import { TeamAPI, Team, OnTeamRefresh } from "./team/types";
@@ -51,12 +51,12 @@ export function activate(context: vscode.ExtensionContext): void {
     const onChallengeRefresh: OnChallengeRefresh = new vscode.EventEmitter();
 
     const api: ChallengeAPI & TeamAPI = {
-        getChallenge: async (id) => challenges.find((challenge) => challenge.id === id),
-        getChallenges: async () => challenges,
+        getChallenge: (id) => challenges.find((challenge) => challenge.id === id),
+        getChallenges: () => challenges,
         refreshChallenge: async(id) => onChallengeRefresh.fire(id),
         refreshChallenges: async () => onChallengeRefresh.fire(null),
         solveChallenge: async (id, flag) => false,
-        getTeams: async () => teams,
+        getTeams: () => teams,
         refreshTeam: async(id) => onTeamRefresh.fire(id),
         refreshTeams: async () => onTeamRefresh.fire(null),
     };
@@ -71,21 +71,27 @@ export function activate(context: vscode.ExtensionContext): void {
     const registers = [
         registerProviders,
         registerRefreshChallenge,
-        registerGotoChallenge,
+        registerOpenChallenge,
         registerViewChallenge,
         registerSolveChallenge,
         registerRefreshScoreboard,
+        registerSearchChallenge,
     ];
 
     registers.forEach((register) => register(props));
 }
 
 function registerProviders(props: RegisterData): void {
-    const folders = vscode.workspace.workspaceFolders;
+    const challengeProvider = new ChallengeTreeDataProvider(props.api, props.onChallengeRefresh);
+    vscode.window.registerTreeDataProvider("vs-ctf.challenges", challengeProvider);
 
-    if (folders && folders.length > 0) {
-        vscode.window.registerTreeDataProvider("vs-ctf.challenges", new ChallengeTreeDataProvider(props.api, props.onChallengeRefresh));
-    }
+    const challengeTree = vscode.window.createTreeView("vs-ctf.challenges", { treeDataProvider: challengeProvider });
+    const command = vscode.commands.registerCommand("vs-ctf.goto-challenge", async (id: { id: string }) => {
+        vscode.commands.executeCommand("vs-ctf.view-challenge", id);
+        challengeTree.reveal({type: "challenge", id: id.id});
+    });
+
+    props.context.subscriptions.push(command);
 
     vscode.window.registerTreeDataProvider("vs-ctf.scoreboard", new TeamTreeDataProvider(props.api, props.onTeamRefresh));
 }
@@ -98,9 +104,10 @@ function registerRefreshChallenge(props: RegisterData): void {
     props.context.subscriptions.push(command);
 }
 
-function registerGotoChallenge(props: RegisterData): void {
-    const command = vscode.commands.registerCommand("vs-ctf.goto-challenge", async (item: ChallengeTreeItem) => {
-        const challenge = item.data;
+function registerOpenChallenge(props: RegisterData): void {
+    const command = vscode.commands.registerCommand("vs-ctf.open-challenge", async (id: ChallengeTreeID) => {
+        const challenge = props.api.getChallenge(id.id);
+        if (!challenge) return;
 
         const folders = vscode.workspace.workspaceFolders;
         if (!folders || folders.length === 0) return;
@@ -113,11 +120,28 @@ function registerGotoChallenge(props: RegisterData): void {
     props.context.subscriptions.push(command);
 }
 
+function registerSearchChallenge(props: RegisterData): void {
+    const command = vscode.commands.registerCommand("vs-ctf.search-challenge", async () => {
+        const challenges = props.api.getChallenges();
+
+        const name = await vscode.window.showQuickPick(challenges.map((challenge) => challenge.name), { canPickMany: false });
+        if (name == null) return;
+
+        const challenge = challenges.find((challenge) => challenge.name === name);
+        if (challenge == null) return;
+
+        vscode.commands.executeCommand("vs-ctf.goto-challenge", { id: challenge.id });
+    });
+
+    props.context.subscriptions.push(command);
+}
+
 function registerViewChallenge(props: RegisterData): void {
     const challengeViews: Record<string, ChallengeWebview> = {};
 
-    const command = vscode.commands.registerCommand("vs-ctf.view-challenge", (item: ChallengeTreeItem) => {
-        const challenge = item.data;
+    const command = vscode.commands.registerCommand("vs-ctf.view-challenge", (entry: { id: string }) => {
+        const challenge = props.api.getChallenge(entry.id);
+        if (!challenge) return;
 
         let view = challengeViews[challenge.id];
         if (!view) {
@@ -131,8 +155,9 @@ function registerViewChallenge(props: RegisterData): void {
 }
 
 function registerSolveChallenge(props: RegisterData): void {
-    const command = vscode.commands.registerCommand("vs-ctf.solve-challenge", async (item: ChallengeTreeItem) => {
-        const challenge = item.data;
+    const command = vscode.commands.registerCommand("vs-ctf.solve-challenge", async (id: ChallengeTreeID) => {
+        const challenge = props.api.getChallenge(id.id);
+        if (!challenge) return;
 
         const flag = await vscode.window.showInputBox({
             placeHolder: "Enter flag..."

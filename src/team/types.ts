@@ -8,7 +8,7 @@ export interface Team {
 }
 
 export interface TeamAPI {
-    getTeams: () => Promise<readonly Team[]>,
+    getTeams: () => readonly Team[],
     refreshTeam: (id: string) => Promise<void>,
     refreshTeams: () => Promise<void>,
 }
