@@ -1,15 +1,15 @@
 import * as vscode from "vscode";
 
-import { OnTeamRefresh, Team, TeamAPI, TeamTreeEntry } from "./types";
+import { OnTeamRefresh, Team, TeamAPI, TeamTreeID } from "./types";
 
 export class TeamTreeDataProvider
-  implements vscode.TreeDataProvider<TeamTreeEntry>
+  implements vscode.TreeDataProvider<TeamTreeID>
 {
   private _onDidChangeTreeData: vscode.EventEmitter<
-    TeamTreeEntry | undefined | void
-  > = new vscode.EventEmitter<TeamTreeEntry | undefined | void>();
+    TeamTreeID | undefined | void
+  > = new vscode.EventEmitter<TeamTreeID | undefined | void>();
 
-  readonly onDidChangeTreeData: vscode.Event<TeamTreeEntry | undefined | void> =
+  readonly onDidChangeTreeData: vscode.Event<TeamTreeID | undefined | void> =
     this._onDidChangeTreeData.event;
 
   public readonly api: TeamAPI;
@@ -24,24 +24,27 @@ export class TeamTreeDataProvider
     });
   }
 
-  public async getChildren(entry?: TeamTreeEntry): Promise<TeamTreeEntry[]> {
+  public getParent(element: TeamTreeID): vscode.ProviderResult<TeamTreeID> {
+    return null;
+  }
+
+  public async getChildren(element?: TeamTreeID): Promise<TeamTreeID[]> {
+    if (element) return [];
+
     const teams = await this.api.getTeams();
 
     const sortedTeams = [...teams].sort((a, b) => a.position - b.position);
 
-    let entries: TeamTreeEntry[] = sortedTeams.map((data) => ({
-      type: "team",
-      data,
-    }));
+    let entries: TeamTreeID[] = sortedTeams.map((team) => team.id);
 
     return entries;
   }
 
-  public getTreeItem(entry: TeamTreeEntry): vscode.TreeItem {
-    switch (entry.type) {
-      case "team":
-        return new TeamTreeItem(entry.data);
-    }
+  public getTreeItem(element: TeamTreeID): vscode.TreeItem {
+    const team = this.api.getTeam(element);
+    if (!team) return {};
+
+    return new TeamTreeItem(team);
   }
 }
 

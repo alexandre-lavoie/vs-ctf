@@ -62,39 +62,57 @@
     "commands": [
       {
         "command": "vs-ctf.refresh-challenges",
-        "category": "VS CTF",
+        "category": "CTF",
         "title": "Refresh Challenges",
         "icon": "$(refresh)"
       },
       {
         "command": "vs-ctf.view-challenge",
-        "category": "VS CTF",
+        "category": "CTF",
         "title": "View Challenge",
         "icon": "$(eye)"
       },
       {
         "command": "vs-ctf.open-challenge",
-        "category": "VS CTF",
+        "category": "CTF",
         "title": "Open Challenge",
         "icon": "$(files)",
         "enablement": "view == vs-ctf.challenges"
       },
       {
+        "command": "vs-ctf.goto-challenge",
+        "category": "CTF",
+        "title": "Goto Challenge",
+        "enablement": "false"
+      },
+      {
         "command": "vs-ctf.search-challenge",
-        "category": "VS CTF",
+        "category": "CTF",
         "title": "Search Challenge",
         "icon": "$(search)"
       },
       {
         "command": "vs-ctf.solve-challenge",
-        "category": "VS CTF",
+        "category": "CTF",
         "title": "Solve Challenge",
         "icon": "$(send)",
         "enablement": "view == vs-ctf.challenges"
       },
       {
+        "command": "vs-ctf.goto-team",
+        "category": "CTF",
+        "title": "Goto Team",
+        "enablement": "false"
+      },
+      {
+        "command": "vs-ctf.search-team",
+        "category": "CTF",
+        "title": "Search Team",
+        "icon": "$(search)"
+      },
+      {
         "command": "vs-ctf.refresh-scoreboard",
-        "category": "VS CTF",
+        "category": "CTF",
         "title": "Refresh Scoreboard",
         "icon": "$(refresh)"
       }
@@ -109,6 +127,11 @@
         {
           "command": "vs-ctf.search-challenge",
           "when": "view == vs-ctf.challenges",
+          "group": "navigation"
+        },
+        {
+          "command": "vs-ctf.search-team",
+          "when": "view == vs-ctf.scoreboard",
           "group": "navigation"
         },
         {

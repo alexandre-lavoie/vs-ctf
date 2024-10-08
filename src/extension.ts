@@ -76,47 +76,63 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const registers = [
-    registerProviders,
+    registerChallengeProvider,
+    registerTeamProvider,
     registerRefreshChallenge,
     registerOpenChallenge,
     registerViewChallenge,
     registerSolveChallenge,
     registerRefreshScoreboard,
+    registerSearchTeam,
     registerSearchChallenge,
   ];
 
   registers.forEach((register) => register(props));
 }
 
-function registerProviders(props: RegisterData): void {
-  const challengeProvider = new ChallengeTreeDataProvider(
+function registerChallengeProvider(props: RegisterData): void {
+  const provider = new ChallengeTreeDataProvider(
     props.api,
     props.onChallengeRefresh
   );
 
-  vscode.window.registerTreeDataProvider(
-    "vs-ctf.challenges",
-    challengeProvider
-  );
+  vscode.window.registerTreeDataProvider("vs-ctf.challenges", provider);
 
-  const challengeTree = vscode.window.createTreeView("vs-ctf.challenges", {
-    treeDataProvider: challengeProvider,
+  const tree = vscode.window.createTreeView("vs-ctf.challenges", {
+    treeDataProvider: provider,
   });
 
   const command = vscode.commands.registerCommand(
     "vs-ctf.goto-challenge",
     async (id: { id: string }) => {
       vscode.commands.executeCommand("vs-ctf.view-challenge", id);
-      challengeTree.reveal({ type: "challenge", id: id.id });
+      tree.reveal({ type: "challenge", id: id.id });
     }
   );
 
   props.context.subscriptions.push(command);
+}
 
-  vscode.window.registerTreeDataProvider(
-    "vs-ctf.scoreboard",
-    new TeamTreeDataProvider(props.api, props.onTeamRefresh)
+function registerTeamProvider(props: RegisterData): void {
+  const treeDataProvider = new TeamTreeDataProvider(
+    props.api,
+    props.onTeamRefresh
   );
+
+  vscode.window.registerTreeDataProvider("vs-ctf.scoreboard", treeDataProvider);
+
+  const tree = vscode.window.createTreeView("vs-ctf.scoreboard", {
+    treeDataProvider,
+  });
+
+  const command = vscode.commands.registerCommand(
+    "vs-ctf.goto-team",
+    async (id: { id: string }) => {
+      tree.reveal(id.id);
+    }
+  );
+
+  props.context.subscriptions.push(command);
 }
 
 function registerRefreshChallenge(props: RegisterData): void {
@@ -224,6 +240,30 @@ function registerSolveChallenge(props: RegisterData): void {
       } else {
         vscode.window.showErrorMessage("Invalid flag");
       }
+    }
+  );
+
+  props.context.subscriptions.push(command);
+}
+
+function registerSearchTeam(props: RegisterData): void {
+  const command = vscode.commands.registerCommand(
+    "vs-ctf.search-team",
+    async () => {
+      const teams = props.api.getTeams();
+
+      const name = await vscode.window.showQuickPick(
+        teams.map((team) => team.name),
+        { canPickMany: false }
+      );
+      if (name == null) return;
+
+      const team = teams.find((team) => team.name === name);
+      if (team == null) return;
+
+      vscode.commands.executeCommand("vs-ctf.goto-team", {
+        id: team.id,
+      });
     }
   );
 

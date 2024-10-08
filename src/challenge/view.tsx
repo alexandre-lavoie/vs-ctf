@@ -28,12 +28,14 @@ export class ChallengeWebview {
     this.challengeId = challengeId;
     this.extensionUri = extensionUri;
     this.onChallengeRefresh = onChallengeRefresh;
+
     this.todoIconPath = vscode.Uri.joinPath(
       this.extensionUri,
       "resources",
       "icons",
       "assignment.svg"
     );
+
     this.solvedIconPath = vscode.Uri.joinPath(
       this.extensionUri,
       "resources",

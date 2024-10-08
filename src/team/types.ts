@@ -21,4 +21,4 @@ export interface TeamTreeItem {
 
 export type OnTeamRefresh = vscode.EventEmitter<string | null>;
 
-export type TeamTreeEntry = TeamTreeItem;
+export type TeamTreeID = string;
