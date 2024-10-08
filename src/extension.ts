@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 
+import { updateChallengeFolder } from "./challenge/fileSystem";
 import { ChallengeTreeDataProvider } from "./challenge/tree";
 import {
   Challenge,
@@ -11,7 +12,6 @@ import { ChallengeWebview } from "./challenge/view";
 import { TeamTreeDataProvider } from "./team/tree";
 import { OnTeamRefresh, Team, TeamAPI } from "./team/types";
 import { stringToSafePath } from "./utils";
-import { updateChallengeFolder } from "./challenge/fileSystem";
 
 interface RegisterData {
   context: vscode.ExtensionContext;
@@ -86,6 +86,7 @@ export function activate(context: vscode.ExtensionContext): void {
     registerRefreshScoreboard,
     registerSearchTeam,
     registerSearchChallenge,
+    registerGotoMe,
   ];
 
   registers.forEach((register) => register(props));
@@ -158,7 +159,11 @@ function registerOpenChallenge(props: RegisterData): void {
       if (!folders || folders.length === 0) return;
       const folder = folders[0];
 
-      await updateChallengeFolder(props.context.extensionUri, folder.uri, challenge);
+      await updateChallengeFolder(
+        props.context.extensionUri,
+        folder.uri,
+        challenge
+      );
 
       const path = vscode.Uri.joinPath(
         folder.uri,
@@ -269,6 +274,20 @@ function registerSearchTeam(props: RegisterData): void {
       await vscode.commands.executeCommand("vs-ctf.goto-team", {
         id: team.id,
       });
+    }
+  );
+
+  props.context.subscriptions.push(command);
+}
+
+function registerGotoMe(props: RegisterData): void {
+  const command = vscode.commands.registerCommand(
+    "vs-ctf.goto-me",
+    async () => {
+      // TODO: Team
+      // await vscode.commands.executeCommand("vs-ctf.goto-team", {
+      //   id: team.id,
+      // });
     }
   );
 

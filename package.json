@@ -105,6 +105,12 @@
         "enablement": "false"
       },
       {
+        "command": "vs-ctf.goto-me",
+        "category": "CTF",
+        "title": "Me",
+        "icon": "$(account)"
+      },
+      {
         "command": "vs-ctf.search-team",
         "category": "CTF",
         "title": "Search Team",
@@ -127,6 +133,11 @@
         {
           "command": "vs-ctf.search-challenge",
           "when": "view == vs-ctf.challenges",
+          "group": "navigation"
+        },
+        {
+          "command": "vs-ctf.goto-me",
+          "when": "view == vs-ctf.scoreboard",
           "group": "navigation"
         },
         {
