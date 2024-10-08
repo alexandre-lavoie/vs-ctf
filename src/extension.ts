@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 
-import { updateChallengeFolder } from "./challenge/fileSystem";
 import { ChallengeTreeDataProvider } from "./challenge/tree";
 import {
   Challenge,
@@ -9,6 +8,7 @@ import {
   OnChallengeRefresh,
 } from "./challenge/types";
 import { ChallengeWebview } from "./challenge/view";
+import { updateChallengeFolder } from "./fileSystem";
 import { TeamTreeDataProvider } from "./team/tree";
 import { OnTeamRefresh, Team, TeamAPI } from "./team/types";
 import { stringToSafePath } from "./utils";
@@ -114,16 +114,17 @@ function registerConfigure(props: RegisterData): void {
       await config.update("ctf.url", url);
 
       switch (ctfType) {
-        case "ctfd": {
-          const token = await vscode.window.showInputBox({
-            title: "What is your CTFd session token or api key?",
-            value: config.get("ctfd.token"),
-            password: true
-          });
-          if (!token) return;
-          await config.update("ctfd.token", token);
-
-        } break;
+        case "ctfd":
+          {
+            const token = await vscode.window.showInputBox({
+              title: "What is your CTFd session token or api key?",
+              value: config.get("ctfd.token"),
+              password: true,
+            });
+            if (!token) return;
+            await config.update("ctfd.token", token);
+          }
+          break;
       }
 
       await config.update("ctf.enabled", true);
@@ -285,7 +286,8 @@ function registerSolveChallenge(props: RegisterData): void {
       if (!challenge) return;
 
       const flagKey = `flag:${challenge.id}`;
-      const value: string | undefined = props.context.workspaceState.get(flagKey) || undefined;
+      const value: string | undefined =
+        props.context.workspaceState.get(flagKey) || undefined;
 
       const flag = await vscode.window.showInputBox({
         value,

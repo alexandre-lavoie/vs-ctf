@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
-import { stringToSafePath } from "../utils";
-import { Challenge } from "./types";
+import { Challenge } from "./challenge/types";
+import { stringToSafePath } from "./utils";
 
 export async function updateChallengeFolder(
   extensionUri: vscode.Uri,

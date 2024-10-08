@@ -39,50 +39,50 @@
   },
   "contributes": {
     "configuration": [
-        {
-            "title": "VS CTF",
-            "properties": {
-                "vs-ctf.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Is VS CTF enabled?"
-                }
-            }
-        },
-        {
-            "title": "CTF",
-            "properties": {
-                "vs-ctf.ctf.enabled": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Is VS CTF enabled in this workspace?"
-                },
-                "vs-ctf.ctf.type": {
-                    "type": "string",
-                    "enum": [
-                        "ctfd",
-                        "custom"
-                    ],
-                    "default": "custom",
-                    "description": "The platform that the CTF running on"
-                },
-                "vs-ctf.ctf.url": {
-                    "type": "string",
-                    "default": "",
-                    "description": "URL of the CTF"
-                }
-            }
-        },
-        {
-            "title": "CTFd",
-            "properties": {
-                "vs-ctf.ctfd.token": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Session token or aPI key of CTFd account"
-                }
-            }
+      {
+        "title": "VS CTF",
+        "properties": {
+          "vs-ctf.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Is VS CTF enabled?"
+          }
         }
+      },
+      {
+        "title": "CTF",
+        "properties": {
+          "vs-ctf.ctf.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Is VS CTF enabled in this workspace?"
+          },
+          "vs-ctf.ctf.type": {
+            "type": "string",
+            "enum": [
+              "ctfd",
+              "custom"
+            ],
+            "default": "custom",
+            "description": "The platform that the CTF running on"
+          },
+          "vs-ctf.ctf.url": {
+            "type": "string",
+            "default": "",
+            "description": "URL of the CTF"
+          }
+        }
+      },
+      {
+        "title": "CTFd",
+        "properties": {
+          "vs-ctf.ctfd.token": {
+            "type": "string",
+            "default": "",
+            "description": "Session token or api key of CTFd account"
+          }
+        }
+      }
     ],
     "viewsContainers": {
       "activitybar": [
@@ -113,10 +113,10 @@
       ]
     },
     "viewsWelcome": [
-        {
-            "view": "vs-ctf.getting-started",
-            "contents": "This workspace is not configured for VS CTF. If this not the case, let the maintainers know. Otherwise, click the button below to configure the workspace.\n[Configure](command:vs-ctf.configure)"
-        }
+      {
+        "view": "vs-ctf.getting-started",
+        "contents": "This workspace is not configured for VS CTF. If this not the case, let the maintainers know. Otherwise, click the button below to configure the workspace.\n[Configure](command:vs-ctf.configure)"
+      }
     ],
     "commands": [
       {
