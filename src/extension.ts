@@ -77,6 +77,7 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const registers = [
+    registerConfigure,
     registerChallengeProvider,
     registerTeamProvider,
     registerRefreshChallenge,
@@ -90,6 +91,46 @@ export function activate(context: vscode.ExtensionContext): void {
   ];
 
   registers.forEach((register) => register(props));
+}
+
+function registerConfigure(props: RegisterData): void {
+  const command = vscode.commands.registerCommand(
+    "vs-ctf.configure",
+    async () => {
+      const config = vscode.workspace.getConfiguration("vs-ctf");
+
+      const ctfType = await vscode.window.showQuickPick(["ctfd", "custom"], {
+        title: "What platform is this CTF running on?",
+        canPickMany: false,
+      });
+      if (!ctfType) return;
+      await config.update("ctf.type", ctfType);
+
+      const url = await vscode.window.showInputBox({
+        title: "What is the URL of the CTF?",
+        value: config.get("ctf.url"),
+      });
+      if (!url) return;
+      await config.update("ctf.url", url);
+
+      switch (ctfType) {
+        case "ctfd": {
+          const token = await vscode.window.showInputBox({
+            title: "What is your CTFd session token or api key?",
+            value: config.get("ctfd.token"),
+            password: true
+          });
+          if (!token) return;
+          await config.update("ctfd.token", token);
+
+        } break;
+      }
+
+      await config.update("ctf.enabled", true);
+    }
+  );
+
+  props.context.subscriptions.push(command);
 }
 
 function registerChallengeProvider(props: RegisterData): void {
@@ -127,29 +168,37 @@ function registerTeamProvider(props: RegisterData): void {
     treeDataProvider,
   });
 
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.goto-team",
     async (id: { id: string }) => {
       tree.reveal(id.id);
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
+}
+
+function registerRefreshConfiguration(props: RegisterData): void {
+  const listener = vscode.workspace.onDidChangeConfiguration((event) => {
+    // TODO: Configuration
+  });
+
+  props.context.subscriptions.push(listener);
 }
 
 function registerRefreshChallenge(props: RegisterData): void {
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.refresh-challenges",
     async () => {
       await props.api.refreshChallenges();
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
 }
 
 function registerOpenChallenge(props: RegisterData): void {
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.open-challenge",
     async (id: ChallengeTreeID) => {
       const challenge = props.api.getChallenge(id.id);
@@ -175,11 +224,11 @@ function registerOpenChallenge(props: RegisterData): void {
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
 }
 
 function registerSearchChallenge(props: RegisterData): void {
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.search-challenge",
     async () => {
       const challenges = props.api.getChallenges();
@@ -199,13 +248,13 @@ function registerSearchChallenge(props: RegisterData): void {
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
 }
 
 function registerViewChallenge(props: RegisterData): void {
   const challengeViews: Record<string, ChallengeWebview> = {};
 
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.view-challenge",
     (entry: { id: string }) => {
       const challenge = props.api.getChallenge(entry.id);
@@ -225,23 +274,28 @@ function registerViewChallenge(props: RegisterData): void {
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
 }
 
 function registerSolveChallenge(props: RegisterData): void {
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.solve-challenge",
     async (id: ChallengeTreeID) => {
       const challenge = props.api.getChallenge(id.id);
       if (!challenge) return;
 
+      const flagKey = `flag:${challenge.id}`;
+      const value: string | undefined = props.context.workspaceState.get(flagKey) || undefined;
+
       const flag = await vscode.window.showInputBox({
+        value,
         placeHolder: "Enter flag...",
       });
-
       if (!flag) {
         return;
       }
+
+      await props.context.workspaceState.update(flagKey, flag);
 
       if (await props.api.solveChallenge(challenge.id, flag)) {
         await props.api.refreshChallenge(challenge.id);
@@ -253,11 +307,11 @@ function registerSolveChallenge(props: RegisterData): void {
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
 }
 
 function registerSearchTeam(props: RegisterData): void {
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.search-team",
     async () => {
       const teams = props.api.getTeams();
@@ -277,11 +331,11 @@ function registerSearchTeam(props: RegisterData): void {
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
 }
 
 function registerGotoMe(props: RegisterData): void {
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.goto-me",
     async () => {
       // TODO: Team
@@ -291,18 +345,18 @@ function registerGotoMe(props: RegisterData): void {
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
 }
 
 function registerRefreshScoreboard(props: RegisterData): void {
-  const command = vscode.commands.registerCommand(
+  const listener = vscode.commands.registerCommand(
     "vs-ctf.refresh-scoreboard",
     async () => {
       await props.api.refreshTeams();
     }
   );
 
-  props.context.subscriptions.push(command);
+  props.context.subscriptions.push(listener);
 }
 
 export function deactivate(): void {}

@@ -38,6 +38,52 @@
     "typescript": "^5.6.2"
   },
   "contributes": {
+    "configuration": [
+        {
+            "title": "VS CTF",
+            "properties": {
+                "vs-ctf.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Is VS CTF enabled?"
+                }
+            }
+        },
+        {
+            "title": "CTF",
+            "properties": {
+                "vs-ctf.ctf.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Is VS CTF enabled in this workspace?"
+                },
+                "vs-ctf.ctf.type": {
+                    "type": "string",
+                    "enum": [
+                        "ctfd",
+                        "custom"
+                    ],
+                    "default": "custom",
+                    "description": "The platform that the CTF running on"
+                },
+                "vs-ctf.ctf.url": {
+                    "type": "string",
+                    "default": "",
+                    "description": "URL of the CTF"
+                }
+            }
+        },
+        {
+            "title": "CTFd",
+            "properties": {
+                "vs-ctf.ctfd.token": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Session token or aPI key of CTFd account"
+                }
+            }
+        }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -50,15 +96,28 @@
     "views": {
       "vs-ctf": [
         {
+          "id": "vs-ctf.getting-started",
+          "name": "Getting Started",
+          "when": "!config.vs-ctf.ctf.enabled"
+        },
+        {
           "id": "vs-ctf.challenges",
-          "name": "Challenges"
+          "name": "Challenges",
+          "when": "config.vs-ctf.ctf.enabled"
         },
         {
           "id": "vs-ctf.scoreboard",
-          "name": "Scoreboard"
+          "name": "Scoreboard",
+          "when": "config.vs-ctf.ctf.enabled"
         }
       ]
     },
+    "viewsWelcome": [
+        {
+            "view": "vs-ctf.getting-started",
+            "contents": "This workspace is not configured for VS CTF. If this not the case, let the maintainers know. Otherwise, click the button below to configure the workspace.\n[Configure](command:vs-ctf.configure)"
+        }
+    ],
     "commands": [
       {
         "command": "vs-ctf.refresh-challenges",
@@ -75,7 +134,7 @@
       {
         "command": "vs-ctf.open-challenge",
         "category": "CTF",
-        "title": "Open Challenge",
+        "title": "Open",
         "icon": "$(files)",
         "enablement": "view == vs-ctf.challenges"
       },
@@ -94,8 +153,8 @@
       {
         "command": "vs-ctf.solve-challenge",
         "category": "CTF",
-        "title": "Solve Challenge",
-        "icon": "$(send)",
+        "title": "Solve",
+        "icon": "resources/icons/flag.svg",
         "enablement": "view == vs-ctf.challenges"
       },
       {
