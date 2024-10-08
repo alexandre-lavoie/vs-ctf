@@ -1,14 +1,20 @@
 import * as vscode from "vscode";
-import { Team, TeamAPI, TeamTreeEntry } from "./types";
+import { OnTeamRefresh, Team, TeamAPI, TeamTreeEntry } from "./types";
 
 export class TeamTreeDataProvider implements vscode.TreeDataProvider<TeamTreeEntry> {
     private _onDidChangeTreeData: vscode.EventEmitter<TeamTreeEntry | undefined | void> = new vscode.EventEmitter<TeamTreeEntry | undefined | void>();
     readonly onDidChangeTreeData: vscode.Event<TeamTreeEntry | undefined | void> = this._onDidChangeTreeData.event;
 
     public readonly api: TeamAPI;
+    private readonly onTeamRefresh: OnTeamRefresh;
 
-    public constructor(api: TeamAPI) {
+    public constructor(api: TeamAPI, onTeamRefresh: OnTeamRefresh) {
         this.api = api;
+
+        this.onTeamRefresh = onTeamRefresh;
+        this.onTeamRefresh.event(() => {
+            this._onDidChangeTreeData.fire();
+        });
     }
 
     public async getChildren(entry?: TeamTreeEntry): Promise<TeamTreeEntry[]> {

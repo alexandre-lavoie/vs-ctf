@@ -3,7 +3,7 @@ import * as ReactDOMServer from 'react-dom/server';
 import * as vscode from "vscode";
 import Markdown from "react-markdown";
 
-import { Challenge, ChallengeAPI } from "./types";
+import { Challenge, ChallengeAPI, OnChallengeRefresh } from "./types";
 import FileButton from "../components/FileButton";
 import Panel from "../components/Panel";
 
@@ -13,16 +13,25 @@ export class ChallengeWebview {
     public readonly extensionUri: vscode.Uri;
     public readonly todoIconPath: vscode.Uri;
     public readonly solvedIconPath: vscode.Uri;
+    private readonly onChallengeRefresh: OnChallengeRefresh;
 
     private panel?: vscode.WebviewPanel;
     private challenge?: Challenge;
 
-    public constructor(api: ChallengeAPI, challengeId: string, extensionUri: vscode.Uri) {
+    public constructor(api: ChallengeAPI, challengeId: string, extensionUri: vscode.Uri, onChallengeRefresh: OnChallengeRefresh) {
         this.api = api;
         this.challengeId = challengeId;
         this.extensionUri = extensionUri;
+        this.onChallengeRefresh = onChallengeRefresh;
         this.todoIconPath = vscode.Uri.joinPath(this.extensionUri, "resources", "icons", "assignment.svg");
         this.solvedIconPath = vscode.Uri.joinPath(this.extensionUri, "resources", "icons", "flag.svg");
+
+        this.onChallengeRefresh = onChallengeRefresh;
+        this.onChallengeRefresh.event((id) => {
+            if (id === null || id === challengeId) {
+                this.refreshPanel();
+            }
+        });
     }
 
     public async showPanel(): Promise<void> {
@@ -65,14 +74,21 @@ export class ChallengeWebview {
         return <Panel
             extensionUri={this.extensionUri}
         >
-            <h2>{this.challenge.name}</h2>
+            <div style={{display: "flex", gap: "16px"}}>
+                <div style={{flexGrow: 1}}>
+                    <h2>{this.challenge.name}</h2>
+                </div>
+                <div style={{display: "flex", gap: "16px"}}>
+                    <h2>{this.challenge.value} Points, {this.challenge.solves} Solves</h2>
+                </div>
+            </div>
             <hr />
             <Markdown>{this.challenge.description}</Markdown>
             <hr />
             <br />
             <div className="button-group">
                 {
-                    this.challenge.files.map((path) => <FileButton path={path} />)
+                    this.challenge.files.map((path) => <FileButton key={path} path={path} />)
                 }
             </div>
         </Panel>;

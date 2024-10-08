@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 export interface Challenge {
     id: string;
     name: string;
@@ -12,6 +14,7 @@ export interface Challenge {
 export interface ChallengeAPI {
     getChallenge: (id: string) => Promise<Challenge | undefined>, 
     getChallenges: () => Promise<readonly Challenge[]>,
+    refreshChallenge: (id: string) => Promise<void>,
     refreshChallenges: () => Promise<void>,
     solveChallenge: (id: string, flag: string) => Promise<boolean>, 
 }
@@ -26,9 +29,6 @@ export interface ChallengeCategoryTreeItem {
     data: string,
 }
 
-export interface ChallengeFileTreeItem {
-    type: "file",
-    data: string,
-}
+export type OnChallengeRefresh = vscode.EventEmitter<string | null>;
 
-export type ChallengeTreeEntry = ChallengeTreeItem | ChallengeCategoryTreeItem | ChallengeFileTreeItem;
+export type ChallengeTreeEntry = ChallengeTreeItem | ChallengeCategoryTreeItem;

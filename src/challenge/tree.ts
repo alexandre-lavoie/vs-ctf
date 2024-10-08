@@ -1,15 +1,21 @@
 import * as vscode from "vscode";
 
-import { Challenge, ChallengeAPI, ChallengeTreeEntry } from "./types";
+import { Challenge, ChallengeAPI, ChallengeTreeEntry, OnChallengeRefresh } from "./types";
 
 export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<ChallengeTreeEntry> {
     private _onDidChangeTreeData: vscode.EventEmitter<ChallengeTreeEntry | undefined | void> = new vscode.EventEmitter<ChallengeTreeEntry | undefined | void>();
     readonly onDidChangeTreeData: vscode.Event<ChallengeTreeEntry | undefined | void> = this._onDidChangeTreeData.event;
 
     public readonly api: ChallengeAPI;
+    private readonly onChallengeRefresh: OnChallengeRefresh;
 
-    public constructor(api: ChallengeAPI) {
+    public constructor(api: ChallengeAPI, onChallengeRefresh: OnChallengeRefresh) {
         this.api = api;
+        this.onChallengeRefresh = onChallengeRefresh;
+
+        this.onChallengeRefresh.event(() => {
+            this._onDidChangeTreeData.fire();
+        });
     }
 
     public async getChildren(entry?: ChallengeTreeEntry): Promise<ChallengeTreeEntry[]> {
@@ -25,20 +31,18 @@ export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<Challe
                 type: "category",
                 data
             }));
-        } else if (entry.type === "category") {
-            const filteredChallenges = challenges.filter((challenge) => challenge.category === entry.data);
+        } else {
+            switch (entry.type) {
+                case "category": {
+                    const filteredChallenges = challenges.filter((challenge) => challenge.category === entry.data);
 
-            entries = filteredChallenges.map((data) => ({
-                type: "challenge",
-                data
-            }));
-        } else if (entry.type == "challenge") {
-            entries = [
-                {
-                    type: "file",
-                    data: "TODO"
-                }
-            ];
+                    entries = filteredChallenges.map((data) => ({
+                        type: "challenge",
+                        data
+                    }));
+
+                } break;
+            }
         }
 
         return entries;
@@ -50,8 +54,6 @@ export class ChallengeTreeDataProvider implements vscode.TreeDataProvider<Challe
                 return new ChallengeTreeItem(entry.data);
             case "category":
                 return new ChallengeCategoryTreeItem(entry.data);
-            case "file":
-                return new ChallengeFileTreeItem(entry.data);
         }
     }
 }
@@ -61,12 +63,18 @@ export class ChallengeTreeItem extends vscode.TreeItem {
     public static readonly TODO_ICON = new vscode.ThemeIcon("close");
 
     public constructor(challenge: Challenge) {
-        super(challenge.name, vscode.TreeItemCollapsibleState.Collapsed);
+        super(challenge.name, vscode.TreeItemCollapsibleState.None);
         this.contextValue = `challenge_${challenge.solved ? "done" : "todo"}`;
 
         this.description = `${challenge.value} Points, ${challenge.solves} Solves`;
 
         this.iconPath = challenge.solved ? ChallengeTreeItem.SOLVED_ICON : ChallengeTreeItem.TODO_ICON;
+
+        this.command = {
+            title: "View challenge",
+            command: "vs-ctf.view-challenge",
+            arguments: [{data: challenge}]
+        };
     }
 }
 
@@ -78,14 +86,5 @@ export class ChallengeCategoryTreeItem extends vscode.TreeItem {
         this.contextValue = "category";
 
         this.iconPath = ChallengeCategoryTreeItem.ICON;
-    }
-}
-
-export class ChallengeFileTreeItem extends vscode.TreeItem {
-    public constructor(name: string) {
-        super(name, vscode.TreeItemCollapsibleState.None);
-        this.contextValue = "file";
-
-        this.resourceUri = vscode.Uri.parse("/etc/passwd");
     }
 }
