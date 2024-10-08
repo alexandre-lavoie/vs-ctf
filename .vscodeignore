@@ -1,0 +1,10 @@
+.vscode/**
+dist/**
+node_modules/**
+src/**
+out/extension.js.map
+.gitignore
+.prettier*
+rollup.config.ts
+tsconfig.json
+**/*.vsix

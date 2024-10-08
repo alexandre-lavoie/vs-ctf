@@ -5,7 +5,6 @@
     "lib": ["ES2022"],
     "moduleResolution": "bundler",
     "strict": true,
-    "sourceMap": true,
     "jsx": "react"
   }
 }
