@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { VSCodeAPI } from "./api/vscode";
 import { ChallengeTreeDataProvider } from "./challenge/tree";
 import {
+  Challenge,
   ChallengeAPI,
   ChallengeTreeID,
   OnChallengeRefresh,
@@ -12,7 +13,7 @@ import { CTF_TYPES, FLAG_KEY } from "./config";
 import { updateChallengeFolder, updateWorkspaceFolder } from "./fileSystem";
 import { TeamTreeDataProvider } from "./team/tree";
 import { OnTeamRefresh, TeamAPI } from "./team/types";
-import { stringToSafePath } from "./utils";
+import { showChallengePicker, showTeamPicker, stringToSafePath } from "./utils";
 
 interface RegisterData {
   context: vscode.ExtensionContext;
@@ -210,16 +211,8 @@ function registerSearchChallenge(props: RegisterData): void {
   const listener = vscode.commands.registerCommand(
     "vs-ctf.search-challenge",
     async () => {
-      const challenges = props.api.getChallenges();
-
-      const name = await vscode.window.showQuickPick(
-        challenges.map((challenge) => challenge.name),
-        { canPickMany: false }
-      );
-      if (name == null) return;
-
-      const challenge = challenges.find((challenge) => challenge.name === name);
-      if (challenge == null) return;
+      const challenge = await showChallengePicker(props.api);
+      if (!challenge) return;
 
       await vscode.commands.executeCommand("vs-ctf.goto-challenge", {
         id: challenge.id,
@@ -261,8 +254,14 @@ function registerViewChallenge(props: RegisterData): void {
 function registerSolveChallenge(props: RegisterData): void {
   const listener = vscode.commands.registerCommand(
     "vs-ctf.solve-challenge",
-    async (id: ChallengeTreeID) => {
-      const challenge = props.api.getChallenge(id.id);
+    async (entry?: { id: string }) => {
+      let challenge: Challenge | null;
+      if (entry) {
+        challenge = props.api.getChallenge(entry.id);
+      } else {
+        challenge = await showChallengePicker(props.api);
+      }
+
       if (!challenge) return;
 
       const flagKey = `${FLAG_KEY}${challenge.id}`;
@@ -295,16 +294,8 @@ function registerSearchTeam(props: RegisterData): void {
   const listener = vscode.commands.registerCommand(
     "vs-ctf.search-team",
     async () => {
-      const teams = props.api.getTeams();
-
-      const name = await vscode.window.showQuickPick(
-        teams.map((team) => team.name),
-        { canPickMany: false }
-      );
-      if (name == null) return;
-
-      const team = teams.find((team) => team.name === name);
-      if (team == null) return;
+      const team = await showTeamPicker(props.api);
+      if (!team) return;
 
       await vscode.commands.executeCommand("vs-ctf.goto-team", {
         id: team.id,

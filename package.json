@@ -134,7 +134,7 @@
       {
         "command": "vs-ctf.open-challenge",
         "category": "CTF",
-        "title": "Open",
+        "title": "Open Challenge",
         "icon": "$(files)",
         "enablement": "view == vs-ctf.challenges"
       },
@@ -153,9 +153,8 @@
       {
         "command": "vs-ctf.solve-challenge",
         "category": "CTF",
-        "title": "Solve",
-        "icon": "resources/icons/flag.svg",
-        "enablement": "view == vs-ctf.challenges"
+        "title": "Solve Challenge",
+        "icon": "resources/icons/flag.svg"
       },
       {
         "command": "vs-ctf.goto-team",
