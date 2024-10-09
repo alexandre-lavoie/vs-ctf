@@ -49,6 +49,11 @@
             "type": "string",
             "default": null,
             "description": "Path to template folder"
+          },
+          "vs-ctf.sync": {
+            "type": "number",
+            "default": 60,
+            "description": "Rate of sync in seconds"
           }
         }
       },

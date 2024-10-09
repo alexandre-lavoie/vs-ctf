@@ -24,7 +24,6 @@ interface RegisterData {
 
 export function activate(context: vscode.ExtensionContext): void {
   const api = new VSCodeAPI(context);
-  api.initialize();
 
   const props: RegisterData = {
     api,
@@ -35,7 +34,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const registers = [
     registerConfigure,
-    registerRefreshConfiguration,
+    registerRefreshWorkspace,
     registerChallengeProvider,
     registerTeamProvider,
     registerRefreshChallenge,
@@ -46,9 +45,41 @@ export function activate(context: vscode.ExtensionContext): void {
     registerSearchTeam,
     registerSearchChallenge,
     registerGotoMe,
+    registerRefresh,
   ];
 
   registers.forEach((register) => register(props));
+}
+
+function registerRefresh(props: RegisterData): void {
+  const config = vscode.workspace.getConfiguration("vs-ctf");
+
+  let interval: any | null = null;
+
+  function updateInterval() {
+    if (interval) {
+      clearInterval(interval);
+      interval = null;
+    }
+
+    const rate = config.get<number>("sync") || 0;
+    if (rate > 0) {
+      interval = setInterval(async () => {
+        await props.api.refreshChallenges();
+        await props.api.refreshTeams();
+      }, rate * 1000);
+    }
+  }
+
+  updateInterval();
+
+  const listener = vscode.workspace.onDidChangeConfiguration(async (event) => {
+    if (!event.affectsConfiguration("vs-ctf.ctf.sync")) return;
+
+    updateInterval();
+  });
+
+  props.context.subscriptions.push(listener);
 }
 
 function registerConfigure(props: RegisterData): void {
@@ -89,6 +120,9 @@ function registerConfigure(props: RegisterData): void {
       }
 
       await config.update("ctf.enabled", true);
+
+      await props.api.refreshChallenges();
+      await props.api.refreshTeams();
     }
   );
 
@@ -140,23 +174,20 @@ function registerTeamProvider(props: RegisterData): void {
   props.context.subscriptions.push(listener);
 }
 
-function registerRefreshConfiguration(props: RegisterData): void {
+function registerRefreshWorkspace(props: RegisterData): void {
   const listener = vscode.workspace.onDidChangeConfiguration(async (event) => {
+    if (!event.affectsConfiguration("vs-ctf.ctf.enabled")) return;
+
     const config = vscode.workspace.getConfiguration("vs-ctf");
 
-    let folder = undefined;
-    if (
-      vscode.workspace.workspaceFolders &&
-      vscode.workspace.workspaceFolders.length > 0
-    ) {
-      folder = vscode.workspace.workspaceFolders[0];
-    }
+    if (!config.get("ctf.enabled")) return;
 
-    if (event.affectsConfiguration("vs-ctf.ctf.enabled")) {
-      if (folder && config.get("ctf.enabled")) {
-        await updateWorkspaceFolder(props.context.extensionUri, folder.uri);
-      }
-    }
+    const folders = vscode.workspace.workspaceFolders;
+    if (!folders || folders.length === 0) return;
+
+    let folder = folders[0];
+
+    await updateWorkspaceFolder(props.context.extensionUri, folder.uri);
   });
 
   props.context.subscriptions.push(listener);
@@ -224,27 +255,18 @@ function registerSearchChallenge(props: RegisterData): void {
 }
 
 function registerViewChallenge(props: RegisterData): void {
-  const challengeViews: Record<string, ChallengeWebview> = {};
+  const challengePanel = new ChallengeWebview(
+    props.api,
+    props.context.extensionUri,
+    props.onChallengeRefresh
+  );
 
   const listener = vscode.commands.registerCommand(
     "vs-ctf.view-challenge",
     async (entry: { id: string }) => {
-      const challenge = props.api.getChallenge(entry.id);
-      if (!challenge) return;
-
-      let view = challengeViews[challenge.id];
-      if (!view) {
-        view = challengeViews[challenge.id] = new ChallengeWebview(
-          props.api,
-          challenge.id,
-          props.context.extensionUri,
-          props.onChallengeRefresh
-        );
-      }
-
-      await view.showPanel();
-
       await props.api.refreshChallenge(entry.id);
+
+      await challengePanel.showPanel();
     }
   );
 

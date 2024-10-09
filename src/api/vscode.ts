@@ -29,11 +29,6 @@ export class VSCodeAPI implements ChallengeAPI, TeamAPI {
     this.refreshConfiguration = this.registerRefreshConfiguration();
   }
 
-  public async initialize(): Promise<void> {
-    await this.api.refreshChallenges();
-    await this.api.refreshTeams();
-  }
-
   public dispose(): void {
     this.refreshConfiguration.dispose();
   }
@@ -123,6 +118,7 @@ export class VSCodeAPI implements ChallengeAPI, TeamAPI {
     if (!(await this.api.solveChallenge(id, flag))) return false;
 
     await this.refreshChallenge(id);
+    await this.refreshTeams();
 
     return true;
   }
@@ -140,6 +136,10 @@ export class VSCodeAPI implements ChallengeAPI, TeamAPI {
       .keys()
       .filter((key) => key.startsWith(TEAM_KEY))
       .map((key) => this.context.workspaceState.get(key)!);
+  }
+
+  private async deleteTeamInternal(id: string): Promise<void> {
+    await this.context.workspaceState.update(`${TEAM_KEY}${id}`, undefined);
   }
 
   public async refreshTeam(id: string): Promise<boolean> {
@@ -175,9 +175,20 @@ export class VSCodeAPI implements ChallengeAPI, TeamAPI {
   }
 
   private async refreshTeamsInteral(): Promise<void> {
-    this.api
-      .getTeams()
-      .forEach((entry) => this.refreshTeamInternal(entry.id, false));
+    const upstreamTeams = this.api.getTeams();
+    const upstreamTeamIds = new Set(upstreamTeams.map((team) => team.id));
+
+    upstreamTeams.forEach((entry) => this.refreshTeamInternal(entry.id, false));
+
+    const localTeams = this.getTeams();
+
+    await Promise.all(
+      localTeams.map(async (entry) => {
+        if (upstreamTeamIds.has(entry.id)) return;
+
+        this.deleteTeamInternal(entry.id);
+      })
+    );
 
     this.onTeamRefresh.fire(null);
   }

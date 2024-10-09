@@ -7,23 +7,21 @@ import { Challenge, ChallengeAPI, OnChallengeRefresh } from "./types";
 
 export class ChallengeWebview {
   public readonly api: ChallengeAPI;
-  public readonly challengeId: string;
   public readonly extensionUri: vscode.Uri;
   public readonly todoIconPath: vscode.Uri;
   public readonly solvedIconPath: vscode.Uri;
   private readonly onChallengeRefresh: OnChallengeRefresh;
 
   private panel?: vscode.WebviewPanel;
+  private challengeId: string | null = null;
   private challenge: Challenge | null = null;
 
   public constructor(
     api: ChallengeAPI,
-    challengeId: string,
     extensionUri: vscode.Uri,
     onChallengeRefresh: OnChallengeRefresh
   ) {
     this.api = api;
-    this.challengeId = challengeId;
     this.extensionUri = extensionUri;
     this.onChallengeRefresh = onChallengeRefresh;
 
@@ -43,9 +41,11 @@ export class ChallengeWebview {
 
     this.onChallengeRefresh = onChallengeRefresh;
     this.onChallengeRefresh.event((id) => {
-      if (id === null || id === challengeId) {
-        this.refreshPanel();
-      }
+      if (!id) return;
+
+      this.challengeId = id;
+
+      this.refreshPanel();
     });
   }
 
@@ -70,6 +70,8 @@ export class ChallengeWebview {
 
   public async refreshPanel(): Promise<void> {
     if (!this.panel) return;
+
+    if (this.challengeId === null) return;
 
     this.challenge = await this.api.getChallenge(this.challengeId);
     if (!this.challenge) return;
