@@ -1,7 +1,15 @@
+import * as vscode from "vscode";
+
 import { Challenge, ChallengeAPI } from "../challenge/types";
 import { Team, TeamAPI } from "../team/types";
 
 export class CustomAPI implements ChallengeAPI, TeamAPI {
+  public readonly context: vscode.ExtensionContext;
+
+  public constructor(context: vscode.ExtensionContext) {
+    this.context = context;
+  }
+
   public async getTeamId(): Promise<string | null> {
     return null;
   }
@@ -24,6 +32,13 @@ export class CustomAPI implements ChallengeAPI, TeamAPI {
 
   public async solveChallenge(id: string, flag: string): Promise<boolean> {
     return true;
+  }
+
+  public async downloadChallenge(
+    id: string,
+    uri: vscode.Uri
+  ): Promise<boolean> {
+    return false;
   }
 
   public getTeam(id: string): Team | null {

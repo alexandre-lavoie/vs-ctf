@@ -18,6 +18,7 @@ export interface ChallengeAPI {
   refreshChallenge: (id: string) => Promise<boolean>;
   refreshChallenges: () => Promise<boolean>;
   solveChallenge: (id: string, flag: string) => Promise<boolean>;
+  downloadChallenge: (id: string, uri: vscode.Uri) => Promise<boolean>;
 }
 
 export type OnChallengeRefresh = vscode.EventEmitter<string | null>;

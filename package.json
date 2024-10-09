@@ -102,16 +102,18 @@
       ]
     },
     "views": {
+      "explorer": [
+        {
+          "id": "vs-ctf.challenges",
+          "name": "Challenges",
+          "when": "config.vs-ctf.ctf.enabled"
+        }
+      ],
       "vs-ctf": [
         {
           "id": "vs-ctf.getting-started",
           "name": "Getting Started",
           "when": "!config.vs-ctf.ctf.enabled"
-        },
-        {
-          "id": "vs-ctf.challenges",
-          "name": "Challenges",
-          "when": "config.vs-ctf.ctf.enabled"
         },
         {
           "id": "vs-ctf.scoreboard",
@@ -134,19 +136,6 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "vs-ctf.view-challenge",
-        "category": "CTF",
-        "title": "View Challenge",
-        "icon": "$(eye)"
-      },
-      {
-        "command": "vs-ctf.open-challenge",
-        "category": "CTF",
-        "title": "Open Challenge",
-        "icon": "$(files)",
-        "enablement": "view == vs-ctf.challenges"
-      },
-      {
         "command": "vs-ctf.goto-challenge",
         "category": "CTF",
         "title": "Goto Challenge",
@@ -165,6 +154,12 @@
         "icon": "resources/icons/flag.svg"
       },
       {
+        "command": "vs-ctf.download-challenge",
+        "category": "CTF",
+        "title": "Download Challenge",
+        "icon": "$(arrow-down)"
+      },
+      {
         "command": "vs-ctf.goto-team",
         "category": "CTF",
         "title": "Goto Team",
@@ -173,7 +168,7 @@
       {
         "command": "vs-ctf.goto-me",
         "category": "CTF",
-        "title": "Me",
+        "title": "Show Me",
         "icon": "$(account)"
       },
       {
@@ -219,13 +214,13 @@
       ],
       "view/item/context": [
         {
-          "command": "vs-ctf.open-challenge",
-          "when": "view == vs-ctf.challenges && (viewItem == challenge_todo || viewItem == challenge_done)",
+          "command": "vs-ctf.solve-challenge",
+          "when": "view == vs-ctf.challenges && viewItem == challenge",
           "group": "inline"
         },
         {
-          "command": "vs-ctf.solve-challenge",
-          "when": "view == vs-ctf.challenges && viewItem == challenge_todo",
+          "command": "vs-ctf.download-challenge",
+          "when": "view == vs-ctf.challenges && viewItem == challenge",
           "group": "inline"
         }
       ]

@@ -61,7 +61,9 @@ export class ChallengeTreeDataProvider
       const categories = [
         ...new Set(challenges.map((challenge) => challenge.category)),
       ];
-      const sortedCategories = categories.sort((a, b) => a.localeCompare(b));
+      const sortedCategories = categories.sort((a, b) =>
+        a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase())
+      );
 
       ids = sortedCategories.map((id) => ({
         type: "category",
@@ -72,7 +74,11 @@ export class ChallengeTreeDataProvider
         (challenge) => challenge.category === element.id
       );
 
-      ids = filteredChallenges.map((challenge) => ({
+      const sortedChallenges = filteredChallenges.sort((a, b) =>
+        a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase())
+      );
+
+      ids = sortedChallenges.map((challenge) => ({
         type: "challenge",
         id: challenge.id,
       }));
@@ -100,7 +106,7 @@ export class ChallengeTreeItem extends vscode.TreeItem {
 
   public constructor(challenge: Challenge) {
     super(challenge.name, vscode.TreeItemCollapsibleState.None);
-    this.contextValue = `challenge_${challenge.solved ? "done" : "todo"}`;
+    this.contextValue = "challenge";
 
     this.description = `${challenge.value} Points, ${challenge.solves} Solves`;
 
@@ -109,8 +115,8 @@ export class ChallengeTreeItem extends vscode.TreeItem {
       : ChallengeTreeItem.TODO_ICON;
 
     this.command = {
-      title: "View challenge",
-      command: "vs-ctf.view-challenge",
+      title: "Search Challenge",
+      command: "vs-ctf.search-challenge",
       arguments: [{ id: challenge.id }],
     };
   }

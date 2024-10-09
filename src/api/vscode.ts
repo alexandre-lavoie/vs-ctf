@@ -6,6 +6,7 @@ import {
   OnChallengeRefresh,
 } from "../challenge/types";
 import { CHALLENGE_KEY, CTF_TYPES, TEAM_KEY } from "../config";
+import { updateChallengeFolder } from "../fileSystem";
 import { OnTeamRefresh, Team, TeamAPI } from "../team/types";
 import { CTFdAPI } from "./ctfd";
 import { CustomAPI } from "./custom";
@@ -38,20 +39,20 @@ export class VSCodeAPI implements ChallengeAPI, TeamAPI {
 
     switch (ctfType) {
       case "ctfd":
-        return new CTFdAPI();
+        return new CTFdAPI(this.context);
       case "custom":
-        return new CustomAPI();
+        return new CustomAPI(this.context);
     }
   }
 
   private registerRefreshConfiguration(): vscode.Disposable {
     return vscode.workspace.onDidChangeConfiguration(async (event) => {
-      if (event.affectsConfiguration("vs-ctf.ctf.type")) {
-        this.api = this.buildAPI();
+      if (!event.affectsConfiguration("vs-ctf.ctf.type")) return;
 
-        await this.api.refreshChallenges();
-        await this.api.refreshTeams();
-      }
+      this.api = this.buildAPI();
+
+      await this.api.refreshChallenges();
+      await this.api.refreshTeams();
     });
   }
 
@@ -119,6 +120,22 @@ export class VSCodeAPI implements ChallengeAPI, TeamAPI {
 
     await this.refreshChallenge(id);
     await this.refreshTeams();
+
+    return true;
+  }
+
+  public async downloadChallenge(
+    id: string,
+    uri: vscode.Uri
+  ): Promise<boolean> {
+    const challenge = this.api.getChallenge(id);
+    if (!challenge) return false;
+
+    await updateChallengeFolder(this.context.extensionUri, uri, challenge);
+
+    if (!(await this.api.downloadChallenge(id, uri))) return false;
+
+    await this.refreshChallengeInternal(id, true);
 
     return true;
   }

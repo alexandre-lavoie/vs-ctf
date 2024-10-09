@@ -1,7 +1,10 @@
+import path from "path";
 import * as vscode from "vscode";
 
 import { Challenge, ChallengeAPI } from "../challenge/types";
+import { TOKEN_KEY } from "../config";
 import { Team, TeamAPI } from "../team/types";
+import { extractFileName, stringToSafePath } from "../utils";
 
 interface CTFdAPIResponse {
   success: boolean;
@@ -36,9 +39,14 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
   public static readonly CONFIG: vscode.WorkspaceConfiguration =
     vscode.workspace.getConfiguration("vs-ctf");
 
+  public readonly context: vscode.ExtensionContext;
+
   private challenges: Record<string, Challenge> = {};
   private teams: Record<string, Team> = {};
-  private tokenToId: Record<string, string> = {};
+
+  public constructor(context: vscode.ExtensionContext) {
+    this.context = context;
+  }
 
   private getBaseUri(): vscode.Uri {
     return vscode.Uri.parse(
@@ -222,9 +230,52 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
     );
   }
 
+  public async downloadChallenge(
+    id: string,
+    uri: vscode.Uri
+  ): Promise<boolean> {
+    if (!(await this.refreshChallenge(id))) return false;
+
+    const challenge = this.getChallenge(id);
+    if (!challenge) return false;
+
+    if (!challenge.files || challenge.files.length === 0) return true;
+
+    const downloadPath = vscode.Uri.joinPath(
+      uri,
+      stringToSafePath(challenge.name),
+      "download"
+    );
+
+    const statuses = await Promise.all(
+      challenge.files.map(async (file) => {
+        const sourceUri = vscode.Uri.parse(file);
+        const fileName = extractFileName(file);
+        const destinationUri = vscode.Uri.joinPath(downloadPath, fileName);
+
+        const headers = await this.getHeaders(false);
+        const res = await fetch(sourceUri.toString(), {
+          headers,
+        });
+
+        if (res.status !== 200) return false;
+
+        const buffer = new Uint8Array(await res.arrayBuffer());
+
+        await vscode.workspace.fs.writeFile(destinationUri, buffer);
+
+        return true;
+      })
+    );
+
+    return statuses.every((status) => status);
+  }
+
   public async getTeamId(): Promise<string | null> {
     const token = this.getToken();
-    let id = this.tokenToId[token];
+    const tokenKey = `${TOKEN_KEY}${token}`;
+
+    let id = this.context.workspaceState.get<string>(tokenKey);
     if (id) return id;
 
     const data = await this.getUserData();
@@ -235,7 +286,9 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
       id = teamMatch[1].trim();
 
       if (id != "null") {
-        return (this.tokenToId[token] = id);
+        this.context.workspaceState.update(tokenKey, id);
+
+        return id;
       }
     }
 
@@ -243,7 +296,9 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
     if (userMatch) {
       id = userMatch[1].trim();
 
-      return (this.tokenToId[token] = id);
+      this.context.workspaceState.update(tokenKey, id);
+
+      return id;
     }
 
     return null;

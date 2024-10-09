@@ -6,6 +6,8 @@ import ChallengeJSX from "../components/Challenge";
 import { Challenge, ChallengeAPI, OnChallengeRefresh } from "./types";
 
 export class ChallengeWebview {
+  public challengeId: string | null = null;
+
   public readonly api: ChallengeAPI;
   public readonly extensionUri: vscode.Uri;
   public readonly todoIconPath: vscode.Uri;
@@ -13,7 +15,6 @@ export class ChallengeWebview {
   private readonly onChallengeRefresh: OnChallengeRefresh;
 
   private panel?: vscode.WebviewPanel;
-  private challengeId: string | null = null;
   private challenge: Challenge | null = null;
 
   public constructor(
@@ -41,9 +42,7 @@ export class ChallengeWebview {
 
     this.onChallengeRefresh = onChallengeRefresh;
     this.onChallengeRefresh.event((id) => {
-      if (!id) return;
-
-      this.challengeId = id;
+      if (!id || id != this.challengeId) return;
 
       this.refreshPanel();
     });
@@ -53,6 +52,8 @@ export class ChallengeWebview {
     if (this.panel) {
       try {
         this.panel.reveal();
+        await this.refreshPanel();
+
         return;
       } catch {}
     }

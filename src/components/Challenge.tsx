@@ -33,7 +33,7 @@ const Challenge = (props: {
 
     if (props.challenge.files && props.challenge.files.length > 0) {
       sections.push(
-        <div className="button-group">
+        <div key="files" className="button-group">
           {props.challenge.files.map((path) => (
             <FileButton key={path} uri={path} />
           ))}
