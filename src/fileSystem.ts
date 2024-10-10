@@ -59,5 +59,6 @@ export async function updateChallengeFolder(
     templateFolder(extensionUri),
     "challenge"
   );
+
   await vscode.workspace.fs.copy(sourceChallengePath, challengePath);
 }

@@ -4,16 +4,28 @@ import * as vscode from "vscode";
 import { Challenge, ChallengeAPI } from "./challenge/types";
 import { Team, TeamAPI } from "./team/types";
 
-const BAD_CHARS = `!"#$%&'()*+,./:;<=>?@[\]^\`{|}~`;
-
 export function stringToSafePath(value: string): string {
-  value = value.replaceAll(" ", "_").toLowerCase();
+  value = value.trim().replaceAll(" ", "_").toLowerCase();
 
-  for (let i = 0; i < BAD_CHARS.length; i++) {
-    value = value.replaceAll(BAD_CHARS.charAt(i), "");
+  const letters = [];
+
+  for (let i = 0; i < value.length; i++) {
+    const char = value.charAt(i);
+    const code = value.charCodeAt(i);
+
+    if (
+      (48 <= code && code <= 57) ||
+      (97 <= code && code <= 122) ||
+      code === 45 ||
+      code === 95
+    ) {
+      letters.push(char);
+    }
   }
 
-  return value;
+  const out = letters.join("").replaceAll(/_+/g, "_").replace(/_$/, "");
+
+  return out;
 }
 
 export function extractFileName(uri: string): string {

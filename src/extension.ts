@@ -2,12 +2,7 @@ import * as vscode from "vscode";
 
 import { VSCodeAPI } from "./api/vscode";
 import { ChallengeTreeDataProvider } from "./challenge/tree";
-import {
-  Challenge,
-  ChallengeAPI,
-  ChallengeTreeID,
-  OnChallengeRefresh,
-} from "./challenge/types";
+import { Challenge, ChallengeAPI, OnChallengeRefresh } from "./challenge/types";
 import { ChallengeWebview } from "./challenge/view";
 import { CTF_TYPES, FLAG_KEY } from "./config";
 import { updateChallengeFolder, updateWorkspaceFolder } from "./fileSystem";
@@ -150,7 +145,7 @@ function registerChallengeProvider(props: RegisterData): void {
     "vs-ctf.goto-challenge",
     (id: { id: string }) => {
       tree.reveal({ type: "challenge", id: id.id });
-      vscode.commands.executeCommand("vs-ctf.view-challenge", id);
+      vscode.commands.executeCommand("vs-ctf.search-challenge", id);
     }
   );
 
@@ -216,73 +211,100 @@ function registerSearchChallenge(props: RegisterData): void {
     props.onChallengeRefresh
   );
 
+  let lock = false;
+
+  let lastId: string | null = null;
+
   const listener = vscode.commands.registerCommand(
     "vs-ctf.search-challenge",
     async (entry?: { id: string }) => {
-      let challenge: Challenge;
-      if (entry) {
-        challenge = props.api.getChallenge(entry.id) as Challenge;
-      } else {
-        challenge = (await showChallengePick(props.api)) as Challenge;
-      }
+      if (lock) return;
+      lock = true;
 
-      if (!challenge) return;
-
-      const folder = getActiveWorkspaceFolder() as vscode.WorkspaceFolder;
-      if (!folder) return;
-
-      const challengePath = vscode.Uri.joinPath(
-        folder.uri,
-        stringToSafePath(challenge.name)
-      );
-
-      async function updatePanel() {
-        challengePanel.challengeId = challenge.id;
-        await challengePanel.showPanel();
-      }
-
-      async function updateChallenges() {
-        await vscode.commands.executeCommand("vs-ctf.goto-challenge", {
-          id: challenge.id,
-        });
-      }
-
-      async function updateWorkspace() {
-        await updateChallengeFolder(
-          props.context.extensionUri,
-          folder.uri,
-          challenge
-        );
-
-        await vscode.commands.executeCommand(
-          "workbench.files.action.collapseExplorerFolders"
-        );
-
-        await revealFolderRecursive(challengePath);
-
-        await vscode.commands.executeCommand("revealInExplorer", challengePath);
-
-        await updateTerminal();
-      }
-
-      async function updateTerminal() {
-        let terminal = vscode.window.terminals.find(
-          (terminal) => terminal.name === challenge.name
-        );
-        if (terminal) {
-          terminal.show();
-          return;
+      try {
+        let challenge: Challenge;
+        if (entry) {
+          challenge = props.api.getChallenge(entry.id) as Challenge;
+        } else {
+          challenge = (await showChallengePick(props.api)) as Challenge;
         }
 
-        terminal = vscode.window.createTerminal({
-          name: challenge.name,
-          cwd: challengePath,
-        });
+        if (!challenge) return;
 
-        terminal.show();
+        const folder = getActiveWorkspaceFolder() as vscode.WorkspaceFolder;
+        if (!folder) return;
+
+        if (lastId !== challenge.id) {
+          lastId = challenge.id;
+          await props.api.refreshChallenge(challenge.id);
+        }
+
+        const challengePath = vscode.Uri.joinPath(
+          folder.uri,
+          stringToSafePath(challenge.name)
+        );
+
+        async function updatePanel() {
+          challengePanel.challengeId = challenge.id;
+          await challengePanel.showPanel();
+        }
+
+        async function updateChallenges() {
+          await vscode.commands.executeCommand("vs-ctf.goto-challenge", {
+            id: challenge.id,
+          });
+        }
+
+        async function updateWorkspace() {
+          await updateChallengeFolder(
+            props.context.extensionUri,
+            folder.uri,
+            challenge
+          );
+
+          await vscode.commands.executeCommand(
+            "workbench.files.action.collapseExplorerFolders"
+          );
+
+          await revealFolderRecursive(challengePath);
+
+          await vscode.commands.executeCommand(
+            "revealInExplorer",
+            challengePath
+          );
+
+          await updateTerminal();
+        }
+
+        async function updateTerminal() {
+          let terminal = vscode.window.terminals.find(
+            (terminal) => terminal.name === challenge.name
+          );
+          if (terminal) {
+            terminal.show();
+            return;
+          }
+
+          terminal = vscode.window.createTerminal({
+            name: challenge.name,
+            cwd: challengePath,
+          });
+
+          terminal.show();
+        }
+
+        await Promise.all([
+          updatePanel(),
+          updateChallenges(),
+          updateWorkspace(),
+        ]);
+      } catch (e) {
+        lock = false;
+
+        throw e;
       }
 
-      await Promise.all([updatePanel(), updateChallenges(), updateWorkspace()]);
+      lock = false;
     }
   );
 

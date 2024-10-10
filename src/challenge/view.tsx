@@ -74,7 +74,7 @@ export class ChallengeWebview {
 
     if (this.challengeId === null) return;
 
-    this.challenge = await this.api.getChallenge(this.challengeId);
+    this.challenge = this.api.getChallenge(this.challengeId);
     if (!this.challenge) return;
 
     this.panel.title = this.challenge.name;
