@@ -23,7 +23,7 @@
   "main": "out/extension.js",
   "scripts": {
     "dev": "rollup --watch --config rollup.config.ts --bundleConfigAsCjs --configPlugin @rollup/plugin-typescript",
-    "build": "rm out/vendor* && rollup --config rollup.config.ts --bundleConfigAsCjs --configPlugin @rollup/plugin-typescript",
+    "build": "rm -f out/vendor* out/*.map && rollup --config rollup.config.ts --bundleConfigAsCjs --configPlugin @rollup/plugin-typescript",
     "format": "prettier --config .prettierrc.json --ignore-path .prettierignore --write \"**/*.{ts,tsx,md,json}\"",
     "package": "vsce package --out dist"
   },

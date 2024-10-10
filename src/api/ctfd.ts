@@ -92,7 +92,7 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
 
     const text = await res.text();
 
-    const match = text.replaceAll("\n", " ").match(/window\.init = ({.*?})/);
+    const match = text.replaceAll("\n", " ").match(/init = ({.*?})/);
     if (!match) return null;
 
     return match[1];
