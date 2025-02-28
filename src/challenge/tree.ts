@@ -106,7 +106,9 @@ export class ChallengeTreeItem extends vscode.TreeItem {
 
   public constructor(challenge: Challenge) {
     super(challenge.name, vscode.TreeItemCollapsibleState.None);
-    this.contextValue = "challenge";
+    this.contextValue = challenge.solved
+      ? "solved_challenge"
+      : "todo_challenge";
 
     this.description = `${challenge.value} Points, ${challenge.solves} Solves`;
 

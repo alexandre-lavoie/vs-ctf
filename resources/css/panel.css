@@ -102,3 +102,31 @@ hr {
 	display: grid;
 	gap: var(--input-margin-vertical);
 }
+
+.loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-top: calc(var(--input-margin-vertical) * 4);
+	gap: var(--input-margin-vertical);
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 5px solid var(--vscode-button-background);
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+} 

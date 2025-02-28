@@ -26,7 +26,7 @@ const Challenge = (props: {
           <div key="connection">
             <Connection>{props.challenge.connection}</Connection>
           </div>
-          <br />
+          <br key="connection" />
         </>
       );
     }
@@ -37,6 +37,15 @@ const Challenge = (props: {
           {props.challenge.files.map((path) => (
             <FileButton key={path} uri={path} />
           ))}
+        </div>
+      );
+    }
+
+    if (sections.length === 0) {
+      sections.push(
+        <div key="loading" className="loading">
+          <span className="spinner"></span>
+          <p>Loading</p>
         </div>
       );
     }

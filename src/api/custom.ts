@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { Challenge, ChallengeAPI } from "../challenge/types";
+import { Challenge, ChallengeAPI, SolveType } from "../challenge/types";
 import { Team, TeamAPI } from "../team/types";
 
 export class CustomAPI implements ChallengeAPI, TeamAPI {
@@ -30,8 +30,8 @@ export class CustomAPI implements ChallengeAPI, TeamAPI {
     return false;
   }
 
-  public async solveChallenge(id: string, flag: string): Promise<boolean> {
-    return true;
+  public async solveChallenge(id: string, flag: string): Promise<SolveType> {
+    return SolveType.SOLVED;
   }
 
   public async downloadChallenge(

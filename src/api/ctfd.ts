@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { Challenge, ChallengeAPI } from "../challenge/types";
+import { Challenge, ChallengeAPI, SolveType } from "../challenge/types";
 import { TOKEN_KEY } from "../config";
 import { Team, TeamAPI } from "../team/types";
 import { extractFileName, stringToSafePath } from "../utils";
@@ -8,6 +8,7 @@ import { extractFileName, stringToSafePath } from "../utils";
 interface CTFdAPIResponse {
   success: boolean;
   data?: any;
+  errors?: string[];
 }
 
 interface CTFdChallengeResponse {
@@ -86,9 +87,14 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
     const url = vscode.Uri.joinPath(this.getBaseUri(), "challenges").toString();
     const headers = await this.getHeaders(false);
 
-    const res = await fetch(url, {
-      headers,
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        headers,
+      });
+    } catch {
+      return null;
+    }
 
     const text = await res.text();
 
@@ -111,13 +117,19 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
     const url = vscode.Uri.joinPath(this.getAPIUri(), ...path).toString();
     const headers = await this.getHeaders(false);
 
-    const res = await fetch(url, {
-      headers,
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        headers,
+      });
+    } catch {
+      return {
+        success: false,
+        errors: ["fetch error"],
+      };
+    }
 
-    const out = (await res.json()) as CTFdAPIResponse;
-
-    return out;
+    return (await res.json()) as CTFdAPIResponse;
   }
 
   private async requestPost(
@@ -127,15 +139,21 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
     const url = vscode.Uri.joinPath(this.getAPIUri(), ...path).toString();
     const headers = await this.getHeaders(true);
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(data),
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return {
+        success: false,
+        errors: ["fetch error"],
+      };
+    }
 
-    const out = (await res.json()) as CTFdAPIResponse;
-
-    return out;
+    return (await res.json()) as CTFdAPIResponse;
   }
 
   private mergeChallenge(old: Challenge | null, new_: Challenge): Challenge {
@@ -217,16 +235,21 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
     return true;
   }
 
-  public async solveChallenge(id: string, flag: string): Promise<boolean> {
+  public async solveChallenge(id: string, flag: string): Promise<SolveType> {
     const res = await this.requestPost(["challenges", "attempt"], {
       challenge_id: id,
       submission: flag,
     });
-    if (!res.data) return false;
 
-    return (
-      res.data.status === "correct" || res.data.status === "already_solved"
-    );
+    if (!res.data) return SolveType.ERROR;
+
+    if (res.data.status === "correct") {
+      return SolveType.VALID;
+    } else if (res.data.status === "already_solved") {
+      return SolveType.SOLVED;
+    } else {
+      return SolveType.INVALID;
+    }
   }
 
   public async downloadChallenge(
@@ -253,9 +276,15 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
         const destinationUri = vscode.Uri.joinPath(downloadPath, fileName);
 
         const headers = await this.getHeaders(false);
-        const res = await fetch(sourceUri.toString(), {
-          headers,
-        });
+
+        let res: Response;
+        try {
+          res = await fetch(sourceUri.toString(), {
+            headers,
+          });
+        } catch {
+          return false;
+        }
 
         if (res.status !== 200) return false;
 

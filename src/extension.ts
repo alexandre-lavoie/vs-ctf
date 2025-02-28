@@ -2,7 +2,12 @@ import * as vscode from "vscode";
 
 import { VSCodeAPI } from "./api/vscode";
 import { ChallengeTreeDataProvider } from "./challenge/tree";
-import { Challenge, ChallengeAPI, OnChallengeRefresh } from "./challenge/types";
+import {
+  Challenge,
+  ChallengeAPI,
+  OnChallengeRefresh,
+  SolveType,
+} from "./challenge/types";
 import { ChallengeWebview } from "./challenge/view";
 import { CTF_TYPES, FLAG_KEY } from "./config";
 import { updateChallengeFolder, updateWorkspaceFolder } from "./fileSystem";
@@ -217,13 +222,13 @@ function registerSearchChallenge(props: RegisterData): void {
 
   const listener = vscode.commands.registerCommand(
     "vs-ctf.search-challenge",
-    async (entry?: { id: string }) => {
+    async (entry?: { id: string; type?: string }) => {
       if (lock) return;
       lock = true;
 
       try {
         let challenge: Challenge;
-        if (entry) {
+        if (entry && !entry.type) {
           challenge = props.api.getChallenge(entry.id) as Challenge;
         } else {
           challenge = (await showChallengePick(props.api)) as Challenge;
@@ -299,12 +304,10 @@ function registerSearchChallenge(props: RegisterData): void {
           updateWorkspace(),
         ]);
       } catch (e) {
-        lock = false;
-
         throw e;
+      } finally {
+        lock = false;
       }
-
-      lock = false;
     }
   );
 
@@ -362,13 +365,13 @@ function registerSolveChallenge(props: RegisterData): void {
       if (challenge.solved) {
         if (previousFlag) {
           vscode.window.showInformationMessage(
-            `Already solved.\n\nFlag: ${previousFlag}`,
+            `Already solved\n\nFlag: ${previousFlag}`,
             {
               modal: true,
             }
           );
         } else {
-          vscode.window.showInformationMessage("Already solved.", {
+          vscode.window.showInformationMessage("Already solved", {
             modal: true,
           });
         }
@@ -387,26 +390,49 @@ function registerSolveChallenge(props: RegisterData): void {
 
       await props.context.workspaceState.update(flagKey, flag);
 
-      if (await props.api.solveChallenge(challenge.id, flag)) {
-        const folder = getActiveWorkspaceFolder();
-        if (folder) {
-          vscode.workspace.fs.writeFile(
-            vscode.Uri.joinPath(
-              folder.uri,
-              stringToSafePath(challenge.name),
-              "FLAG"
-            ),
-            new TextEncoder().encode(flag)
-          );
-        }
+      let status = await props.api.solveChallenge(challenge.id, flag);
 
-        vscode.window.showInformationMessage("Valid flag", {
-          modal: true,
-        });
-      } else {
-        vscode.window.showErrorMessage("Invalid flag", {
-          modal: true,
-        });
+      switch (status) {
+        case SolveType.VALID:
+          const folder = getActiveWorkspaceFolder();
+          if (folder) {
+            vscode.workspace.fs.writeFile(
+              vscode.Uri.joinPath(
+                folder.uri,
+                stringToSafePath(challenge.name),
+                "FLAG"
+              ),
+              new TextEncoder().encode(flag)
+            );
+          }
+
+          break;
+      }
+
+      switch (status) {
+        case SolveType.VALID:
+          vscode.window.showInformationMessage("Valid flag", {
+            modal: true,
+          });
+          break;
+
+        case SolveType.SOLVED:
+          vscode.window.showWarningMessage("Already solved", {
+            modal: true,
+          });
+          break;
+
+        case SolveType.INVALID:
+          vscode.window.showErrorMessage("Invalid flag", {
+            modal: true,
+          });
+          break;
+
+        case SolveType.ERROR:
+          vscode.window.showErrorMessage("Error submitting flag", {
+            modal: true,
+          });
+          break;
       }
     }
   );

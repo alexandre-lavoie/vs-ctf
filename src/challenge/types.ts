@@ -12,12 +12,19 @@ export interface Challenge {
   files?: string[];
 }
 
+export enum SolveType {
+  SOLVED,
+  VALID,
+  INVALID,
+  ERROR,
+}
+
 export interface ChallengeAPI {
   getChallenge: (id: string) => Challenge | null;
   getChallenges: () => readonly Challenge[];
   refreshChallenge: (id: string) => Promise<boolean>;
   refreshChallenges: () => Promise<boolean>;
-  solveChallenge: (id: string, flag: string) => Promise<boolean>;
+  solveChallenge: (id: string, flag: string) => Promise<SolveType>;
   downloadChallenge: (id: string, uri: vscode.Uri) => Promise<boolean>;
 }
 

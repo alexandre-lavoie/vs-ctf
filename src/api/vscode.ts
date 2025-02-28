@@ -4,6 +4,7 @@ import {
   Challenge,
   ChallengeAPI,
   OnChallengeRefresh,
+  SolveType,
 } from "../challenge/types";
 import { CHALLENGE_KEY, CTF_TYPES, TEAM_KEY } from "../config";
 import { updateChallengeFolder } from "../fileSystem";
@@ -115,13 +116,15 @@ export class VSCodeAPI implements ChallengeAPI, TeamAPI {
     this.onChallengeRefresh.fire(null);
   }
 
-  public async solveChallenge(id: string, flag: string): Promise<boolean> {
-    if (!(await this.api.solveChallenge(id, flag))) return false;
+  public async solveChallenge(id: string, flag: string): Promise<SolveType> {
+    let status = await this.api.solveChallenge(id, flag);
 
-    await this.refreshChallenge(id);
-    await this.refreshTeams();
+    if (status === SolveType.VALID || status === SolveType.SOLVED) {
+      await this.refreshChallenge(id);
+      await this.refreshTeams();
+    }
 
-    return true;
+    return status;
   }
 
   public async downloadChallenge(
