@@ -1,6 +1,6 @@
 # VS CTF
 
-![Cover](.github/images/cover.png)
+![Cover](repo/images/cover.png)
 
 An all-in-one solution for CTFs in VSCode.
 
