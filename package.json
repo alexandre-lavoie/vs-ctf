@@ -1,9 +1,9 @@
 {
   "name": "vs-ctf",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "alexandre-lavoie",
   "displayName": "VS CTF",
-  "description": "An extension for CTFs",
+  "description": "All-in-one solution for CTFs in VSCode",
   "license": "MIT",
   "icon": "resources/icons/icon.png",
   "extensionKind": [
