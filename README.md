@@ -2,7 +2,7 @@
 
 ![Cover](repo/images/cover.png)
 
-An all-in-one solution for CTFs in VSCode.
+All-in-one solution for CTFs in VSCode.
 
 ## Features
 
@@ -28,7 +28,7 @@ Download the extension on your VSCode version of choice. This can be done throug
 1. Sometimes, the UI may not automatically connect. Simply close and restart VSCode
 1. If everything works, the explorer tab should have a `Challenges` tab at the bottom and the VS-CTF tab should have the live scoreboard
 
-## Usage
+## Tips / Usage
 
 - Descriptions are not automatically synced to prevent spamming the CTF infra. Clicking on a challenge will preview it and keep a local cached version of it
 - Folder and terminal will open with the challenge name when the challenge is previewed
