@@ -15,7 +15,7 @@ All-in-one solution for CTFs in VSCode.
 
 ## Installation
 
-Download the extension on your VSCode version of choice. This can be done through the VSIX provided on GitHub or through the Microsoft market.
+Download the extension on your VSCode version of choice. This can be done through [GitHub](https://github.com/alexandre-lavoie/vs-ctf/releases) or [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=alexandre-lavoie.vs-ctf).
 
 ## Configuration
 
