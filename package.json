@@ -1,6 +1,6 @@
 {
   "name": "vs-ctf",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "alexandre-lavoie",
   "displayName": "VS CTF",
   "description": "All-in-one solution for CTFs in VSCode",

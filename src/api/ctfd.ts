@@ -117,19 +117,18 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
     const url = vscode.Uri.joinPath(this.getAPIUri(), ...path).toString();
     const headers = await this.getHeaders(false);
 
-    let res: Response;
     try {
-      res = await fetch(url, {
+      const res = await fetch(url, {
         headers,
       });
+
+      return (await res.json()) as CTFdAPIResponse;
     } catch {
       return {
         success: false,
         errors: ["fetch error"],
       };
     }
-
-    return (await res.json()) as CTFdAPIResponse;
   }
 
   private async requestPost(
@@ -139,21 +138,20 @@ export class CTFdAPI implements ChallengeAPI, TeamAPI {
     const url = vscode.Uri.joinPath(this.getAPIUri(), ...path).toString();
     const headers = await this.getHeaders(true);
 
-    let res: Response;
     try {
-      res = await fetch(url, {
+      const res = await fetch(url, {
         method: "POST",
         headers,
         body: JSON.stringify(data),
       });
+
+      return (await res.json()) as CTFdAPIResponse;
     } catch {
       return {
         success: false,
         errors: ["fetch error"],
       };
     }
-
-    return (await res.json()) as CTFdAPIResponse;
   }
 
   private mergeChallenge(old: Challenge | null, new_: Challenge): Challenge {
